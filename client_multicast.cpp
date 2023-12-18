@@ -162,7 +162,7 @@ auto multicast_client(
         exit_on_error(err, Component::client, ss.str());
         ss.str("");
 
-        ss << "Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
+        ss << "Bound (::bind) to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
            << ntohs(mcast_group.sin_port);
         info(Component::client, ss.str());
     }
