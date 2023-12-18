@@ -2,15 +2,18 @@
 
 #include <condition_variable>
 #include <sstream>
+#include <thread>
 
 #include <boost/asio/ip/address.hpp>
 
-#include "types.hpp"
 #include "binding_functions.hpp"
 #include "logging.hpp"
+#include "types.hpp"
 
 // Playing with code from:
 // http://www.cs.tau.ac.il/~eddiea/samples/Multicast/multicast-listen.c.html
+
+using namespace std::chrono_literals;
 
 auto multicast_client(
     boost::asio::ip::address const& if_addr,
@@ -30,7 +33,6 @@ auto multicast_client(
     std::memset(&mcast_group, 0, sizeof(mcast_group));
     std::memset(&client_addr, 0, sizeof(client_addr));
 
-
     {
         sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
         exit_on_error(sock_fd, Component::client, "Couldn't create socket");
@@ -43,6 +45,7 @@ auto multicast_client(
     }
 
     {
+        // QNX seems to require that I set these separately
         int const opt = 1; // Positive value for re-use
         // clang-format off
         auto const err1 = ::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -178,26 +181,53 @@ auto multicast_client(
         client_ready = true;
         client_ready_cv.notify_all();
         info(Component::client, "Notifying server that client ready");
+        std::this_thread::sleep_for(500ms);
     }
 
     auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
         std::array<char, 1024> buffer = {0};
-        // clang-format off
-        auto const n = ::recvfrom(
-            sock_fd,
-            buffer.data(),
-            buffer.size()-1,
-            MSG_WAITALL,
-            reinterpret_cast<struct sockaddr *>(&mcast_group),
-            &len
-        );
-        // clang-format on
-        buffer[static_cast<decltype(buffer)::size_type>(n)] = '\0';
+        ssize_t n = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            // clang-format off
+            // Getting "Resource temporarily unavailable"
+            n = ::recvfrom(
+                sock_fd,
+                buffer.data(),
+                buffer.size()-1,
+                // MSG_WAITALL,
+                MSG_DONTWAIT,
+                reinterpret_cast<struct sockaddr *>(&mcast_group),
+                &len
+            );
+            // clang-format on
+            auto const errno_b = errno;
+            buffer[static_cast<decltype(buffer)::size_type>(n)] = '\0';
+            if (n < 0)
+            {
+                std::stringstream ss;
+                ss << "recv: error=" << strerror(errno_b);
+                info(Component::client, ss.str());
+                std::this_thread::sleep_for(200ms);
+                continue;
+            }
+            else
+            {
+                break;
+            }
+        }
 
-        std::stringstream ss;
-        ss << "Read: " << buffer.data();
-        info(Component::client, ss.str());
+        if (n>0)
+        {
+            std::stringstream ss;
+            ss << "Read: " << buffer.data();
+            info(Component::client, ss.str());
+        }
+        else
+        {
+            exit_on_error(-1, Component::client, "Never received data from server.");
+        }
     }
 
     info(Component::client, "Closing");

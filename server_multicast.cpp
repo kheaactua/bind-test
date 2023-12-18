@@ -209,7 +209,7 @@ auto multicast_server(
             // clang-format on
             exit_on_error(err, Component::server, "Could not send hello message");
             info(Component::server, "Sent " + hello);
-            std::this_thread::sleep_for(500ms);
+            std::this_thread::sleep_for(200ms);
         }
     }
 
