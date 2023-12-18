@@ -17,7 +17,7 @@ cc_defaults {
     cpp_std: "c++17",
 
     header_libs: ["libboost_headers"],
-    shared_libs: ["libboost_system"],
+    shared_libs: ["libboost_system", "liblog"],
 
     cflags: [
         "-DINTERFACE_IP=\"10.7.0.10\"",

@@ -2,8 +2,10 @@ service bind-test.system /system/bin/bind-test
     user system
     group vendor_routingmanagerd vendor_matt_group
     capabilities NET_RAW NET_ADMIN
+    oneshot
 
 service bind-test.vendor /vendor/bin/bind-test
     user vendor_routingmanagerd
     group vendor_routingmanagerd vendor_matt_group
     capabilities NET_RAW NET_ADMIN
+    oneshot

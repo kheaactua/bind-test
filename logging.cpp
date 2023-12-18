@@ -1,10 +1,10 @@
 
 #include "logging.hpp"
 
-#include <string>
-#include <sstream>
 #include <iostream>
 #include <mutex>
+#include <sstream>
+#include <string>
 
 #include "components.hpp"
 
@@ -24,4 +24,7 @@ auto info(Component c, std::string&& msg) -> void
     ss << ": " << ANSI_BLUE << msg << ANSI_CLEAR;
 
     print_msg(ss.str());
+#ifdef __ANDROID__
+    ALOGI("%s: %s", component_to_str(c, false), msg.c_str());
+#endif
 }
