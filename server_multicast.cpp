@@ -9,9 +9,9 @@
 
 #include <boost/asio/ip/address.hpp>
 
-#include "types.hpp"
 #include "binding_functions.hpp"
 #include "logging.hpp"
+#include "types.hpp"
 
 // Playing with code from:
 // https://www.geeksforgeeks.org/udp-server-client-implementation-c/
@@ -89,6 +89,18 @@ auto multicast_server(
         // receive messages.
 
         // clang-format off
+#ifdef __QNX__
+        ifreq req;
+        std::strcpy(req.ifr_name, if_name.c_str());
+        auto const err = setsockopt(
+            sock_fd,
+            SOL_SOCKET,
+            SO_BINDTODEVICE,
+            &req,
+            static_cast<socklen_t>(sizeof(req))
+        );
+        std::string const tmp_if_name{req.ifr_name};
+#else
         auto const err = setsockopt(
             sock_fd,
             SOL_SOCKET,
@@ -96,9 +108,11 @@ auto multicast_server(
             if_name.c_str(),
             static_cast<socklen_t>(if_name.size())
         );
+        std::string const tmp_if_name{if_name};
+#endif
         // clang-format on
         std::stringstream ss;
-        ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
+        ss << "Could not bind multicast to \"" << tmp_if_name << "\": errno=" << std::to_string(errno)
            << ":" << strerror(errno);
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
@@ -142,7 +156,12 @@ auto multicast_server(
             sizeof(serv_addr)
         );
         // clang-format on
-        exit_on_error(err, Component::server, "bind error");
+        auto const errno_b = errno;
+
+        std::stringstream ss;
+        ss << "Could not bind: "
+           << " Error: " << strerror(errno_b);
+        exit_on_error(err, Component::server, ss.str());
     }
 
     {
