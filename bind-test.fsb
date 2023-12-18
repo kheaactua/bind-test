@@ -1,0 +1,99 @@
+bind_test_source = source_ford_github(
+	repository = "mruss100/bind-test",
+	reference = "main"
+)
+
+BIND_TEST_TARGET_PRESET="vp1"
+BIND_TEST_HOST_PRESET="eno1"
+
+def common_cmake_defs(boost_pkg_name):
+	return """\
+	-DCMAKE_BUILD_TYPE=Debug  \
+	-DBOOST_ROOT:PATH="${{{boost_pkg_name}_STAGING_DIR}}" \
+	-DBoost_INCLUDEDIR:PATH="${{{boost_pkg_name}_STAGING_DIR}}/include" \
+	-DBoost_LIBRARYDIR:PATH="${{{boost_pkg_name}_STAGING_DIR}}/lib" \
+	-DBoost_USE_STATIC_LIBS=On \
+	-DBoost_USE_STATIC_RUNTIME=On \
+	-DCMAKE_VERBOSE_MAKEFILE=Off \
+	-DCMAKE_INSTALL_MESSAGE=Lazy \
+	""".format(boost_pkg_name=boost_pkg_name)
+
+cmake_package(
+	"bind-test",
+	local_override = True,
+	source = bind_test_source,
+	use_pbos=False,
+
+	dependencies = [
+		"boost",
+	],
+
+	configure_instructions = [
+		configure_options("{defaults} {common} {preset}".format(
+			defaults="${DEFAULT_TARGET_CMAKE_CONF_OPTS}",
+			common=common_cmake_defs("boost"),
+			preset="--preset="+BIND_TEST_TARGET_PRESET
+		)),
+		configure()
+	],
+
+	build_instructions = [
+		make_environment("${QNXSDP_ENV}"),
+		make_options(" -f %s/bind-test.mk BIND_TEST_BUILD_PRESET=pdc %s "%(MODULE_PATH, "build")),
+		make(
+			args = "",
+			target="",
+			working_directory=""
+		),
+	],
+
+	install_staging_instructions = [
+		make_environment("${QNXSDP_ENV} "),
+		make_options(),
+		make(
+			args="-f%s/bind-test.mk"MODULE_PATH,
+			target="install",
+			working_directory=""
+		),
+	]
+)
+
+cmake_host_package(
+	"bind-test",
+	local_override = True,
+	source = bind_test_source,
+	use_pbos=False,
+
+	dependencies = [
+		"boost",
+	],
+
+	configure_instructions = [
+		configure_options("{defaults} {common} {preset}".format(
+			defaults="${DEFAULT_TARGET_CMAKE_CONF_OPTS}",
+			common=common_cmake_defs("host-boost"),
+			preset="--preset="+BIND_TEST_HOST_PRESET
+		)),
+		configure()
+	],
+
+	build_instructions = [
+		make_environment("${QNXSDP_ENV}"),
+		make_options(" -f %s/bind-test.mk BIND_TEST_BUILD_PRESET=linux %s "%(MODULE_PATH, "build")),
+		make(
+			args = "",
+			target="",
+			working_directory=""
+		),
+	],
+
+	install_staging_instructions = [
+		make_environment("${QNXSDP_ENV} "),
+		make_options(),
+		make(
+			args="-f%s/bind-test.mk"MODULE_PATH,
+			target="install",
+			working_directory=""
+		),
+	]
+)

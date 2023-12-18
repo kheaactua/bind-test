@@ -1,0 +1,82 @@
+filesets {
+    name: "bind-test.files",
+    srcs: [
+        "binding_function.cpp",
+        "components.cpp",
+        "logging.cpp",
+        "server_multicast.cpp",
+        "client_multicast",
+        "main.cpp",
+    ],
+}
+
+cc_defaults {
+    name: "bind-test.defaults",
+    stem: "bind-test",
+    srcs: [":bind-test.files"],
+    cpp_std: "c++17"
+
+    cflags: [
+        "-DINTERFACE_IP=\"10.7.0.10\"",
+        "-DINTERFACE_NAME=\"oem1\"",
+        "-DMULTICAST_ADDR=\"224.2.127.254\"",
+    ],
+    target: {
+        vendor: {
+            cflags: [
+                "-UINTERFACE_IP",
+                "-UINTERFACE_NAME",
+                "-DMULTICAST_ADDR",
+
+                "-DINTERFACE_IP=\"10.6.0.10\"",
+                "-DINTERFACE_NAME=\"oem2\"",
+                "-DMULTICAST_ADDR=\"224.2.127.254\"",
+            ],
+        },
+    },
+    tidy: true,
+    tidy_checks: [
+        "modernize-*",
+        "readability-delete-null-pointer",
+        "readability-duplicate-include",
+        "readability-convert-member-functions-to-static",
+        "readability-implicit-bool-conversion",
+        "readability-make-member-function-const",
+        "readability-misleading-indentation",
+        "readability-non-const-parameter",
+        "readability-qualified-auto",
+        "readability-redundant-control-flow",
+        "readability-simplify-boolean-expr",
+        "readability-redundant-preprocessor",
+        "readability-string-compare",
+        "readability-static-accessed-through-instance",
+        "readability-const-return-type",
+        "readability-container-contains",
+        "readability-container-data-pointer",
+        "readability-container-size-empty",
+        "readability-avoid-const-params-in-decls",
+        "performance-unnecessary-copy-initialization",
+        "performance-unnecessary-value-param",
+        "performance-move-const-arg",
+        "performance-for-range-copy",
+        "performance-trivially-destructible",
+        "performance-inefficient-string-concatenation",
+        "performance-inefficient-vector-operation",
+        "performance-implicit-conversion-in-loop",
+        "performance-faster-string-find",
+        "misc-new-delete-overloads",
+        "misc-misplaced-const",
+        "misc-misleading-identifier",
+        "misc-throw-by-value-catch-by-reference",
+    ],
+}
+
+cc_binary {
+    name: "bind-test.system",
+    vendor: false,
+}
+
+cc_binary {
+    name: "bind-test.vendor",
+    vendor: true,
+}

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 23,
@@ -8,19 +8,9 @@
   "configurePresets": [
     {
       "name": "default",
+      "hidden": true,
       "displayName": "Default Config",
-      "description": "Default build using Ninja generator",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/default",
-      "environment": {
-        "CC": "clang",
-        "CXX": "clang++"
-      },
       "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": {
-          "type": "BOOL",
-          "value": "ON"
-        },
         "MULTICAST_ADDR": {
           "type": "STRING",
           "value": "224.2.127.254"
@@ -28,42 +18,83 @@
       }
     },
     {
-      "name": "eno1",
+      "name": "linux",
       "inherits": "default",
-      "displayName": "eno1",
-      "description": "Build for eno1",
+      "hidden": true,
+      "displayName": "Linux Config",
+      "description": "Linux build using Ninja generator",
       "cacheVariables": {
-        "INTERFACE_IP": {
-          "type": "STRING",
-          "value": "192.168.2.53"
-        },
-        "INTERFACE_NAME": {
-          "type": "STRING",
-          "value": "eno1"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": {
+          "type": "BOOL",
+          "value": "ON"
         }
       }
     },
     {
-      "name": "qc",
+      "name": "pdc",
       "inherits": "default",
-      "displayName": "QC Network",
-      "description": "Build for enx0050b6eb5220",
+      "hidden": true,
+      "displayName": "PDC-QNX Config",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "$env{QNX_HOST}",
+        "rhs": ""
+      }
+    },
+    {
+      "name": "vp1",
+      "inherits": "pdc",
+      "displayName": "vp1 interface on PDC (corresponds to AOSP-system)",
+      "description": "vp1 interface on PDC",
+      "binaryDir": "${sourceDir}/build/vp1",
       "cacheVariables": {
         "INTERFACE_IP": {
           "type": "STRING",
-          "value": "10.1.0.100"
+          "value": "10.7.0.3"
         },
         "INTERFACE_NAME": {
           "type": "STRING",
-          "value": "enx0050b6eb5220"
+          "value": "vp1"
+        }
+      }
+    },
+    {
+      "name": "vp2",
+      "inherits": "pdc",
+      "displayName": "vp2 interface on PDC (corresponds to AOSP-vendor)",
+      "description": "vp2 interface on PDC",
+      "binaryDir": "${sourceDir}/build/vp2",
+      "cacheVariables": {
+        "INTERFACE_IP": {
+          "type": "STRING",
+          "value": "10.6.0.3"
+        },
+        "INTERFACE_NAME": {
+          "type": "STRING",
+          "value": "vp2"
         }
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "default",
-      "configurePreset": "default"
+      "name": "pdc",
+      "hidden": true,
+      "condition": {
+        "type": "notEquals",
+        "lhs": "$env{QNX_HOST}",
+        "rhs": ""
+      }
+    },
+    {
+      "name": "vp1",
+      "inherits": "pdc",
+      "configurePreset": "vp1"
+    },
+    {
+      "name": "vp2",
+      "inherits": "pdc",
+      "configurePreset": "vp2"
     }
   ]
 }

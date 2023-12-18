@@ -85,4 +85,4 @@ target_link_libraries(bind-test
     Boost::system
     Threads::Threads
 )
-target_compile_features(bind-test PRIVATE cxx_std_20)
+target_compile_features(bind-test PRIVATE cxx_std_17)

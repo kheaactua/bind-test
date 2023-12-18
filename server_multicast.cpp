@@ -3,6 +3,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <sstream>
+#include <thread>
 
 #include <boost/asio/ip/address.hpp>
 
@@ -88,8 +89,7 @@ auto multicast_server(
         );
         // clang-format on
         std::stringstream ss;
-        ss << "Could not bind multicast to \"" << if_name << "\": errno=" <<
-        std::to_string(errno)
+        ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
            << ":" << strerror(errno);
         exit_on_error(err, Component::server, ss.str());
 

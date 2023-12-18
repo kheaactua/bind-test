@@ -1,7 +1,6 @@
 #ifndef LOGGING_HPP_EDKP8OLK
 #define LOGGING_HPP_EDKP8OLK
 
-#include <concepts>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -18,7 +17,6 @@
 auto print_msg(std::string&& msg) -> void;
 
 template <typename T>
-requires std::integral<T>
 auto exit_on_error(T error, Component c, std::string&& msg) -> void
 {
     if (error < 0)
