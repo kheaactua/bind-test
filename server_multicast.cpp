@@ -74,7 +74,7 @@ auto multicast_server(
         exit_on_error(err, Component::server, "Add membership error");
 
         std::stringstream ss;
-        ss << "Added to multicast group " << ::inet_ntoa(req.imr_multiaddr) << " on";
+        ss << "Added to multicast group (IP_ADD_MEMBERSHIP) " << ::inet_ntoa(req.imr_multiaddr) << " on";
 #ifdef __QNX__
         ss << " interface with IP " << ::inet_ntoa(req.imr_interface);
 #else
@@ -115,7 +115,7 @@ auto multicast_server(
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
 
-        ss << "Bound to interface \"" << if_name << "\"";
+        ss << "Bound to interface (SO_BINDTODEVICE) \"" << if_name << "\"";
         info(Component::server, ss.str());
     }
 
@@ -141,7 +141,7 @@ auto multicast_server(
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
 
-        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
+        ss << "Associated with interface (IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
         info(Component::server, ss.str());
     }
 
@@ -166,7 +166,7 @@ auto multicast_server(
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
 
-        ss << "Bound to " << ::inet_ntoa(serv_addr.sin_addr) << ":" << ntohs(serv_addr.sin_port);
+        ss << "Bound (::bind) to " << ::inet_ntoa(serv_addr.sin_addr) << ":" << ntohs(serv_addr.sin_port);
         info(Component::server, ss.str());
     }
 

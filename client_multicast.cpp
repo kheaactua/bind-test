@@ -83,7 +83,7 @@ auto multicast_client(
         exit_on_error(err, Component::client, ss.str());
         ss.str("");
 
-        ss << "Bound to interface \"" << if_name << "\"";
+        ss << "Bound to interface (SO_BINDTODEVICE) \"" << if_name << "\"";
         info(Component::client, ss.str());
     }
 
@@ -107,7 +107,38 @@ auto multicast_client(
         exit_on_error(err, Component::client, ss.str());
         ss.str("");
 
-        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
+        ss << "Associated with interface (IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
+        info(Component::client, ss.str());
+    }
+
+    {
+        // Preparatios for using multicast
+        IP_REQ req;
+        address2in_addr(mc_addr, req.imr_multiaddr);
+#ifdef __QNX__
+        address2in_addr(if_addr, req.imr_interface);
+#else
+        req.imr_ifindex = get_ifindex(if_name);
+#endif
+
+        // clang-format off
+        auto const err = setsockopt(
+            sock_fd,
+            IPPROTO_IP,
+            IP_ADD_MEMBERSHIP,
+            &req,
+            sizeof(req)
+        );
+        // clang-format on
+        exit_on_error(err, Component::client, "Add membership error");
+
+        std::stringstream ss;
+        ss << "Added to multicast group (IP_ADD_MEMBERSHIP) " << ::inet_ntoa(req.imr_multiaddr) << " on";
+#ifdef __QNX__
+        ss << " interface with IP " << ::inet_ntoa(req.imr_interface);
+#else
+        ss << " interface " << get_ifname(req);
+#endif
         info(Component::client, ss.str());
     }
 
@@ -133,37 +164,6 @@ auto multicast_client(
 
         ss << "Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
            << ntohs(mcast_group.sin_port);
-        info(Component::client, ss.str());
-    }
-
-    {
-        // Preparatios for using Multicast
-        IP_REQ req;
-        address2in_addr(mc_addr, req.imr_multiaddr);
-#ifdef __QNX__
-        address2in_addr(if_addr, req.imr_interface);
-#else
-        req.imr_ifindex = get_ifindex(if_name);
-#endif
-
-        // clang-format off
-        auto const err = setsockopt(
-            sock_fd,
-            IPPROTO_IP,
-            IP_ADD_MEMBERSHIP,
-            &req,
-            sizeof(req)
-        );
-        // clang-format on
-        exit_on_error(err, Component::client, "Add membership error");
-
-        std::stringstream ss;
-        ss << "Added to multicast group " << ::inet_ntoa(req.imr_multiaddr) << " on";
-#ifdef __QNX__
-        ss << " interface with IP " << ::inet_ntoa(req.imr_interface);
-#else
-        ss << " interface " << get_ifname(req);
-#endif
         info(Component::client, ss.str());
     }
 
