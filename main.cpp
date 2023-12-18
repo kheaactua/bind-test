@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 
 #include <concepts>
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <string_view>
@@ -31,7 +32,7 @@
 #define ANSI_CLEAR "\033[0m"
 
 // Playing with code from:
-// https://stackoverflow.com/questions/12681097/c-choose-interface-for-udp-multicast-socket
+// https://www.geeksforgeeks.org/udp-server-client-implementation-c/
 
 enum class Component {
     main = 0,
@@ -65,6 +66,7 @@ auto exit_on_error(T error, Component c, std::string&& msg) -> void
     }
 }
 
+using namespace std::chrono_literals;
 
 auto server(
     boost::asio::ip::address const& if_addr,
@@ -73,9 +75,8 @@ auto server(
     int port
 ) -> void
 {
-    struct sockaddr_in addr;
-    int server_fd = 0, new_socket = 0;
-    socklen_t addrlen = sizeof(addr);
+    struct sockaddr_in serv_addr{0}, client_addr{0};
+    int server_fd = 0;
 
     {
         server_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -106,56 +107,61 @@ auto server(
     // bind socket
     {
         // set up addresses
-        std::memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        // [-]    addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        address2in_addr(if_addr, addr.sin_addr.s_addr);
-        addr.sin_port = ::htons(port);
+        // std::memset(&addr, 0, sizeof(addr));
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_addr.s_addr = INADDR_ANY;
+        // address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
+        serv_addr.sin_port = ::htons(port);
 
-        std::cout << "[INFO] Binding to " << ::inet_ntoa(addr.sin_addr) << ":"
-                  << ::ntohs(addr.sin_port) << "\n";
+        std::cout << "[INFO] Binding to " << ::inet_ntoa(serv_addr.sin_addr) << ":"
+                  << ::ntohs(serv_addr.sin_port) << "\n";
 
         // clang-format off
         auto const err = ::bind(
             server_fd,
-            reinterpret_cast<struct sockaddr*>(&addr),
-            sizeof(addr)
+            reinterpret_cast<struct sockaddr*>(&serv_addr),
+            sizeof(serv_addr)
         );
         // clang-format on
         exit_on_error(err, Component::server, "bind error");
     }
 
-    // Listen
-    {
-        auto const err = ::listen(server_fd, /* backlog */ 3);
-        std::stringstream ss;
-        ss << "Failed to listen on server fd = " << server_fd;
-        exit_on_error(err, Component::server, ss.str());
-    }
-
-    // Accept
-    {
-        // clang-format off
-        new_socket = ::accept(
-            server_fd,
-            reinterpret_cast<struct sockaddr*>(&addr),
-            reinterpret_cast<socklen_t*>(&addrlen)
-        );
-        // clang-format on
-        exit_on_error(new_socket, Component::server, "accept error");
-    }
-
+    auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
         std::array<char, 1024> buffer = {0};
-        auto const valread            = ::read(new_socket, buffer.data(), buffer.size());
-        exit_on_error(valread, Component::server, "read error");
+        // clang-format off
+        auto const n = ::recvfrom(
+            server_fd,
+            reinterpret_cast<char *>(buffer.data()),
+            buffer.size()-1,
+            MSG_WAITALL,
+            reinterpret_cast<struct sockaddr *>(&client_addr),
+            reinterpret_cast<socklen_t*>(&len)
+        );
+        // clang-format on
+        buffer[n] = '\0';
         std::cout << "[Info] Service: Read: " << buffer.data() << "\n";
     }
 
     {
-        std::string hello{"hello"};
-        ::send(new_socket, hello.c_str(), hello.size(), 0);
-        std::cout << "[Info] Service: Hello message sent\n";
+        for (int i = 0; i < 2; i++)
+        {
+            std::string hello;
+            hello = "hello" + std::to_string(i);
+            // clang-format off
+            auto const err = ::sendto(
+                server_fd,
+                hello.c_str(),
+                hello.size(),
+                MSG_CONFIRM,
+                reinterpret_cast<const struct sockaddr *>(&client_addr),
+                sizeof(client_addr)
+            );
+            // clang-format on
+            exit_on_error(err, Component::server, "Could not send hello message");
+            std::cout << "[Info] Service: Hello message sent\n";
+            std::this_thread::sleep_for(500ms);
+        }
     }
 
     // use setsockopt() to request that the kernel join a multicast group
@@ -168,6 +174,7 @@ auto server(
     //     exit(1);
     // }
 
+    std::cout << "[Info] Service: Closing";
     close(server_fd);
 }
 
@@ -177,51 +184,57 @@ auto client(
     boost::asio::ip::address const& mc_addr,
     int port) -> int
 {
-    int sock = 0;
-    struct sockaddr_in serv_addr
-    {
-        0
-    };
+    int sock_fd = 0;
+    struct sockaddr_in serv_addr{0}, client_addr{0};
 
     {
-        sock = ::socket(AF_INET, SOCK_STREAM, 0);
-        exit_on_error(sock, Component::client, "Couldn't create socket");
+        sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+        exit_on_error(sock_fd, Component::client, "Couldn't create socket");
     }
 
     serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port   = htons(port);
 
-    // Convert IPv4 and IPv6 addresses from text to binary
-    // form
     {
-        auto const err = inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
-        exit_on_error(err, Component::client, "Invalid address/ Address not supported");
+        for (int i = 0; i < 1; i++)
+        {
+            std::string hello;
+            hello = "hello" + std::to_string(i);
+            // clang-format off
+            auto const err = ::sendto(
+                sock_fd,
+                hello.c_str(),
+                hello.size(),
+                MSG_CONFIRM,
+                reinterpret_cast<const struct sockaddr *>(&serv_addr),
+                sizeof(serv_addr)
+            );
+            // clang-format on
+            exit_on_error(err, Component::client, "Could not send hello message");
+            std::cout << "[Info] Client: Hello message sent\n";
+            std::this_thread::sleep_for(500ms);
+        }
     }
 
-    {
-        // clang-format off
-        auto const err = ::connect(
-            sock,
-            reinterpret_cast<struct sockaddr*>(&serv_addr),
-            sizeof(serv_addr)
-        );
-        // clang-format on
-        exit_on_error(err, Component::client, "Connection failed");
-    }
-
-    {
-        std::string hello{"hello"};
-        ::send(sock, hello.c_str(), hello.size(), 0);
-        std::cout << "[Info] Client: Hello message sent\n";
-    }
-
+    auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
         std::array<char, 1024> buffer = {0};
-        auto const valread            = ::read(sock, buffer.data(), buffer.size());
-        exit_on_error(valread, Component::client, "read error");
+        // clang-format off
+        auto const n = ::recvfrom(
+            sock_fd,
+            reinterpret_cast<char *>(buffer.data()),
+            buffer.size()-1,
+            MSG_WAITALL,
+            reinterpret_cast<struct sockaddr *>(&serv_addr),
+            reinterpret_cast<socklen_t*>(&len)
+        );
+        // clang-format on
+        buffer[n] = '\0';
         std::cout << "[Info] Client: Read: " << buffer.data() << "\n";
     }
 
+    std::cout << "[Info] Client: Closing";
     return 0;
 }
 
@@ -238,8 +251,8 @@ auto main() -> int
               << "maddr=" << mc_addr << "\n";
 
     auto service_thread = std::thread(&server, if_addr, if_name, mc_addr, port);
-    // auto client_thread = std::thread(&client, if_addr, if_name, mc_addr, port);
+    auto client_thread = std::thread(&client, if_addr, if_name, mc_addr, port);
 
     service_thread.join();
-    // client_thread.join();
+    client_thread.join();
 }
