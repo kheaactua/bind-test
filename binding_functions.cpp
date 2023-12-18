@@ -9,7 +9,7 @@
 auto set_mc_bound_2(
     int sockfd,
     boost::asio::ip::address mc_addr,
-    boost::asio::ip::address local,
+    boost::asio::ip::address if_addr,
     std::string const& if_name) -> int
 {
     // Following
@@ -33,7 +33,7 @@ auto set_mc_bound_2(
         if (err != 0)
         {
             std::cout << __func__ << " tce: Could not bind multicast to \"" << if_name
-                      << "\": errno=" << std::to_string(errno) << ":" << strerror(errno) << "";
+                      << "\": errno=" << std::to_string(errno) << ":" << strerror(errno) << "\n";
             return errno;
         }
     }
@@ -44,24 +44,73 @@ auto set_mc_bound_2(
         // also you can recv any packets from any clients in the multicast group.
         // """
         ip_mreqn req;
-        req.imr_address.s_addr = local.to_v4().to_uint();
+
+        {
+            auto const a = if_addr.to_v4().to_bytes();
+            std::memcpy(&req.imr_address.s_addr, a.data(), a.size());
+        }
+        {
+            auto const a = mc_addr.to_v4().to_bytes();
+            std::memcpy(&req.imr_multiaddr.s_addr, a.data(), a.size());
+        }
         get_ifindex(if_name, &req.imr_ifindex);
 
         // clang-format off
-        auto const err = setsockopt(
+        auto const err = ::setsockopt(
             sockfd,
             IPPROTO_IP,
             IP_MULTICAST_IF,
             &req.imr_address,
             sizeof(struct in_addr)
         );
+
+        std::stringstream rss;
+        // clang-format off
+        rss << "req{"
+           << "multiaddr=\"" << ::inet_ntoa(req.imr_multiaddr) << "\","
+           << "addr=\"" << ::inet_ntoa(req.imr_address) << "\","
+           << "index=\"" << req.imr_ifindex << "\""
+           << "}";
         // clang-format on
-        if (err != 0)
+        if (err == 0)
         {
-            std::cout << __func__ << " tce: Could not specify \"" << mc_addr.to_v4().to_string()
-                      << "\" "
-                      << "as the associated address: errno=" << std::to_string(errno) << ":"
-                      << strerror(errno) << "";
+            std::cout << __func__ << ": Successful call to setsockopt(IP_MULTICAST_IF) req=" << rss.str() << "\n";
+        }
+        else
+        {
+            auto const errno_b = errno;
+
+            std::cout << __func__ << ": Could not specify " << rss.str()
+                      << " as the associated address.  Error: ";
+
+            switch (errno_b)
+            {
+                case EBADF:
+                {
+                    std::cout << "Invalid socket descriptor";
+                    break;
+                }
+                case EFAULT:
+                {
+                    std::cout << "invalid optval";
+                    break;
+                }
+                case ENOPROTOOPT:
+                {
+                    std::cout << "optlen invalid";
+                    break;
+                }
+                case ENOTSOCK:
+                {
+                    std::cout << "fd is not a socket";
+                    break;
+                }
+                default:
+                {
+                    std::cout << strerror(errno_b);
+                }
+            }
+            std::cout << "\n";
             return errno;
         }
     }
@@ -103,7 +152,7 @@ auto get_ifname(int if_index, std::string& if_name) -> int
     for (i = if_ni; !(i->if_index == 0 && nullptr == i->if_name); i++)
     {
         std::cout << "get_ifname(search=" << if_index << "): idx=" << i->if_index
-                  << " name=" << i->if_name;
+                  << " name=" << i->if_name << "\n";
         if (i->if_index == if_index)
         {
             if_name = i->if_name;
@@ -154,7 +203,7 @@ auto get_ifindex(std::string const& if_name, int* const if_index) -> unsigned in
     for (i = if_ni; !(i->if_index == 0 && nullptr == i->if_name); i++)
     {
         std::cout << "get_ifindex(search=" << if_name << "): idx=" << i->if_index
-                     << " name=" << i->if_name;
+                  << " name=" << i->if_name << "\n";
         if (0 == std::strncmp(i->if_name, if_name.c_str(), if_name.size()))
         {
             *if_index = i->if_index;

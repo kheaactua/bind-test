@@ -11,7 +11,7 @@ namespace boost::asio::ip
 auto set_mc_bound_2(
     int sockfd,
     boost::asio::ip::address mc_addr,
-    boost::asio::ip::address local,
+    boost::asio::ip::address if_addr,
     std::string const& if_name
 ) -> int;
 
