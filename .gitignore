@@ -3,6 +3,7 @@ build/
 stage/
 boost/
 .cache/
+.envrc
 
 # These shouldn't be here anyways
 CMakeUserPresets.json

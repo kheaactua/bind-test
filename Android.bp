@@ -74,6 +74,8 @@ cc_defaults {
         "misc-misleading-identifier",
         "misc-throw-by-value-catch-by-reference",
     ],
+
+    init_rc: ["bind-test.rc"]
 }
 
 cc_binary {
