@@ -52,24 +52,24 @@ auto client_multicast(
         exit_on_error(err, Component::server, "setsockopt could not specify REUSEADDR");
     }
 
-    // {
-    //     // clang-format off
-    //     auto const err = setsockopt(
-    //         sock_fd,
-    //         SOL_SOCKET,
-    //         SO_BINDTODEVICE,
-    //         if_name.c_str(),
-    //         static_cast<socklen_t>(if_name.size())
-    //     );
-    //     // clang-format on
-    //     std::stringstream ss;
-    //     ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
-    //        << ":" << strerror(errno);
-    //     exit_on_error(err, Component::client, ss.str());
+    {
+        // clang-format off
+        auto const err = setsockopt(
+            sock_fd,
+            SOL_SOCKET,
+            SO_BINDTODEVICE,
+            if_name.c_str(),
+            static_cast<socklen_t>(if_name.size())
+        );
+        // clang-format on
+        std::stringstream ss;
+        ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
+           << ":" << strerror(errno);
+        exit_on_error(err, Component::client, ss.str());
 
-    //     ss << "Bound to interface \"" << if_name << "\"";
-    //     info(Component::server, ss.str());
-    // }
+        ss << "Bound to interface \"" << if_name << "\"";
+        info(Component::server, ss.str());
+    }
 
     {
         ip_mreqn req;
