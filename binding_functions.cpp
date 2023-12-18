@@ -62,6 +62,19 @@ auto set_mc_bound_2(
         return errno;
     }
 
+    // {
+    //     // use setsockopt() to request that the kernel join a multicast group
+    //     ip_mreqn req;
+    //     address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
+    //     // [-]    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    //     mreq.imr_interface.s_addr = inet_addr(my_ipv4Addr);
+    //     if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+    //     {
+    //         perror("setsockopt");
+    //         exit(1);
+    //     }
+    // }
+
     {
         // """
         // you can send out packets through the interface associated with my_ipv4addr,

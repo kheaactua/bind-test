@@ -42,6 +42,19 @@ enum class Component
     client
 };
 
+auto component_to_str(Component c) -> std::string
+{
+    switch (c)
+    {
+        case Component::main:
+            return "main";
+        case Component::server:
+            return "service";
+        case Component::client:
+            return "client";
+    }
+}
+
 template <typename T>
 requires std::integral<T>
 auto exit_on_error(T error, Component c, std::string&& msg) -> void
@@ -49,22 +62,17 @@ auto exit_on_error(T error, Component c, std::string&& msg) -> void
     if (error < 0)
     {
         std::cerr << "[" << ANSI_RED "Error" << ANSI_CLEAR << "] ";
-
-        switch (c)
-        {
-            case Component::main:
-                std::cerr << "main";
-                break;
-            case Component::server:
-                std::cerr << "service";
-                break;
-            case Component::client:
-                std::cerr << "client";
-                break;
-        }
+        std::cerr << component_to_str(c);
         std::cerr << ": " << ANSI_RED << msg << ANSI_CLEAR << "\n";
         exit(1);
     }
+}
+
+auto info(Component c, std::string&& msg) -> void
+{
+    std::cout << "[" << ANSI_BLUE "Info" << ANSI_CLEAR << "] ";
+    std::cout << component_to_str(c);
+    std::cout << ": " << ANSI_BLUE << msg << ANSI_CLEAR << "\n";
 }
 
 using namespace std::chrono_literals;
@@ -109,8 +117,10 @@ auto unicast_server(
         address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
         serv_addr.sin_port = ::htons(port);
 
-        std::cout << "[INFO] Binding to " << ::inet_ntoa(serv_addr.sin_addr) << ":"
-                  << ::ntohs(serv_addr.sin_port) << "\n";
+        std::stringstream ss;
+        ss << "Binding to " << ::inet_ntoa(serv_addr.sin_addr) << ":"
+           << ::ntohs(serv_addr.sin_port);
+        info(Component::server, ss.str());
 
         // clang-format off
         auto const err = ::bind(
@@ -142,7 +152,10 @@ auto unicast_server(
         );
         // clang-format on
         buffer[n] = '\0';
-        std::cout << "[Info] Service: Read: " << buffer.data() << "\n";
+
+        std::stringstream ss;
+        ss << "Read: " << buffer.data();
+        info(Component::server, ss.str());
     }
 
     {
@@ -159,11 +172,11 @@ auto unicast_server(
         );
         // clang-format on
         exit_on_error(err, Component::server, "Could not send hello message");
-        std::cout << "[Info] Service: Hello message sent\n";
+        info(Component::server, "Hello message sent");
         std::this_thread::sleep_for(500ms);
     }
 
-    std::cout << "[Info] Service: Closing\n";
+    info(Component::server, "Closing");
     close(server_fd);
 }
 
@@ -201,12 +214,6 @@ auto multicast_server(
     }
 
     {
-        // auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
-        // std::stringstream ss;
-        // ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
-        //    << ":" << strerror(errno);
-        // exit_on_error(err, Component::server, ss.str());
-
         ip_mreqn req;
         address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
         req.imr_ifindex = 0;
@@ -221,6 +228,37 @@ auto multicast_server(
         );
         // clang-format on
         exit_on_error(err, Component::server, "Add membership error");
+    }
+
+    // Right now, doing this blocks the client from receiving anything!
+    // {
+    //     auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
+    //     std::stringstream ss;
+    //     ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
+    //        << ":" << strerror(errno);
+    //     exit_on_error(err, Component::server, ss.str());
+    // }
+
+    {
+        // Bind to device.  Right now the effect is that the client won't
+        // receive messages.
+
+        // clang-format off
+        auto const err = setsockopt(
+            server_fd,
+            SOL_SOCKET,
+            SO_BINDTODEVICE,
+            if_name.c_str(),
+            static_cast<socklen_t>(if_name.size())
+        );
+        // clang-format on
+        std::stringstream ss;
+        ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
+           << ":" << strerror(errno);
+        exit_on_error(err, Component::server, ss.str());
+
+        ss << "Bound to \"" << if_name << "\"";
+        info(Component::server, ss.str());
     }
 
     // bind socket
@@ -238,7 +276,7 @@ auto multicast_server(
     {
         server_started = true;
         server_started_cv.notify_all();
-        std::cout << "[Info] Service: Notifying that service is bound\n";
+        info(Component::server, "Notifying that service is bound");
     }
 
     {
@@ -261,7 +299,7 @@ auto multicast_server(
             );
             // clang-format on
             exit_on_error(err, Component::server, "Could not send hello message");
-            std::cout << "[Info] Service: Hello message sent\n";
+            info(Component::server, "Hello message sent");
             std::this_thread::sleep_for(500ms);
         }
     }
@@ -276,11 +314,11 @@ auto multicast_server(
     //     exit(1);
     // }
 
-    std::cout << "[Info] Service: Closing\n";
+    info(Component::server, "Closing");
     close(server_fd);
 }
 
-auto client(
+auto client_multicast(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
@@ -304,7 +342,7 @@ auto client(
     {
         std::unique_lock<std::mutex> lk(server_started_mutex);
         server_started_cv.wait(lk, [&server_started] { return server_started; });
-        std::cout << "[INFO] Client: Server started\n";
+        info(Component::server, "Server started");
     }
 
     {
@@ -337,8 +375,9 @@ auto client(
         // clang-format on
         exit_on_error(err, Component::server, "bind error");
         std::stringstream ss;
-        std::cout << "[Info] Client: Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
-                  << ::ntohs(mcast_group.sin_port) << "\n";
+        ss << "Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
+           << ::ntohs(mcast_group.sin_port);
+        info(Component::client, ss.str());
     }
 
     {
@@ -374,7 +413,7 @@ auto client(
     //     );
     //     // clang-format on
     //     exit_on_error(err, Component::client, "Could not send hello message");
-    //     std::cout << "[Info] Client: Hello message sent\n";
+    //     info(Component::client, "Hello message sent");
     //     std::this_thread::sleep_for(500ms);
     // }
 
@@ -392,10 +431,13 @@ auto client(
         );
         // clang-format on
         buffer[n] = '\0';
-        std::cout << "[Info] Client: Read: " << buffer.data() << "\n";
+
+        std::stringstream ss;
+        ss << "Read: " << buffer.data();
+        info(Component::client, ss.str());
     }
 
-    std::cout << "[Info] Client: Closing\n";
+    info(Component::client, "Closing");
     close(sock_fd);
 
     return 0;
@@ -412,10 +454,12 @@ auto main() -> int
     std::mutex server_started_mutex;
     std::condition_variable server_started_cv;
 
-    std::cout << "[INFO] Input: "
-              << "if=" << if_name << ", "
-              << "ipv4=" << if_addr << ", "
-              << "maddr=" << mc_addr << "\n";
+    std::stringstream ss;
+    ss << "Input: "
+       << "if=" << if_name << ", "
+       << "ipv4=" << if_addr << ", "
+       << "maddr=" << mc_addr;
+    info(Component::main, ss.str());
 
     auto service_thread = std::thread(
         &multicast_server,
@@ -428,7 +472,7 @@ auto main() -> int
         std::ref(server_started_cv));
 
     auto client_thread = std::thread(
-        &client,
+        &client_multicast,
         if_addr,
         if_name,
         mc_addr,
