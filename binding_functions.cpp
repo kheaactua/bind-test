@@ -15,24 +15,16 @@
 
 #include <boost/asio/ip/address.hpp>
 
-auto address2in_addr(boost::asio::ip::address const& addr, in_addr_t& dest) -> void
-{
-    auto const a = addr.to_v4().to_bytes();
-// #ifdef __QNX__
-//     std::memcpy(&(dest.s_addr), a.data(), a.size());
-// #else
-    std::memcpy(&dest, a.data(), a.size());
-// #endif
-}
+// auto address2in_addr(boost::asio::ip::address const& addr, in_addr_t& dest) -> void
+// {
+//     auto const a = addr.to_v4().to_bytes();
+//     std::memcpy(&dest, a.data(), a.size());
+// }
 
 auto address2in_addr(boost::asio::ip::address const& addr, in_addr& dest) -> void
 {
     auto const a = addr.to_v4().to_bytes();
-// #ifdef __QNX__
     std::memcpy(&(dest.s_addr), a.data(), a.size());
-// #else
-//     std::memcpy(&dest, a.data(), a.size());
-// #endif
 }
 
 // #ifdef __QNX__

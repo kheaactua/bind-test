@@ -45,8 +45,12 @@ auto multicast_server(
         auto const err = ::setsockopt(
             sock_fd,
             SOL_SOCKET,
-            // SO_REUSEADDR | SO_REUSEPORT,
-            SO_REUSEADDR,
+#ifdef __QNX__
+            // TODO not sure why I appear to need this
+            SO_REUSEPORT,
+#else
+            SO_REUSEADDR | SO_REUSEPORT,
+#endif
             &opt,
             sizeof(opt)
         );
@@ -113,8 +117,7 @@ auto multicast_server(
         ss << "Could not bind multicast to \"" << if_name;
 #endif
         // clang-format on
-        ss << "\": errno=" << std::to_string(errno)
-           << ":" << strerror(errno);
+        ss << "\": errno=" << std::to_string(errno) << ":" << strerror(errno);
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
 
@@ -150,6 +153,10 @@ auto multicast_server(
 
     // bind socket
     {
+        serv_addr.sin_family = AF_INET;
+        address2in_addr(mc_addr, serv_addr.sin_addr);
+        serv_addr.sin_port = htons(port);
+
         // clang-format off
         auto const err = ::bind(
             sock_fd,
@@ -160,9 +167,13 @@ auto multicast_server(
         auto const errno_b = errno;
 
         std::stringstream ss;
-        ss << "Could not bind: "
-           << " Error: " << strerror(errno_b);
+        ss << "Could not bind to " << ::inet_ntoa(serv_addr.sin_addr)
+           << " : Error: " << strerror(errno_b);
         exit_on_error(err, Component::server, ss.str());
+        ss.str("");
+
+        ss << "Bound to " << ::inet_ntoa(serv_addr.sin_addr) << ":" << ntohs(serv_addr.sin_port);
+        info(Component::server, ss.str());
     }
 
     {
