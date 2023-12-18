@@ -189,6 +189,7 @@ auto multicast_server(
         std::unique_lock<std::mutex> lk(component_ready);
         client_ready_cv.wait(lk, [&client_ready] { return client_ready; });
         info(Component::server, "Client ready");
+        std::this_thread::sleep_for(200ms);
     }
 
     {
@@ -215,7 +216,7 @@ auto multicast_server(
             );
             // clang-format on
             exit_on_error(err, Component::server, "Could not send hello message");
-            info(Component::server, "Hello message sent");
+            info(Component::server, "Sent " + hello);
             std::this_thread::sleep_for(500ms);
         }
     }
