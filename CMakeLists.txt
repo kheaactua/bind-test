@@ -30,4 +30,4 @@ target_link_libraries(bind-test
   PRIVATE
     Boost::system
 )
-target_compile_features(bind-test PRIVATE cxx_std_17)
+target_compile_features(bind-test PRIVATE cxx_std_20)

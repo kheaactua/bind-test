@@ -12,6 +12,10 @@
       "description": "Default build using Ninja generator",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/default",
+      "environment": {
+        "CC": "clang",
+        "CXX": "clang++"
+      },
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": {
           "type": "BOOL",

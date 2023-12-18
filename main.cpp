@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string_view>
+#include <sstream>
+#include <concepts>
 
 #include <boost/asio/ip/address.hpp>
 
@@ -20,8 +22,26 @@
 #define "Please define MULTICAST_ADDR"
 #endif
 
+#define ANSI_RED "\033[31;1m"
+#define ANSI_YELLOW "\033[33m"
+#define ANSI_BLUE "\033[34m"
+#define ANSI_GREEN "\033[32m"
+#define ANSI_MAGENTA "\033[35m"
+#define ANSI_CLEAR "\033[0m"
+
 // Playing with code from:
 // https://stackoverflow.com/questions/12681097/c-choose-interface-for-udp-multicast-socket
+
+template <typename T>
+requires std::integral<T>
+auto exit_on_error(T error, std::string&& msg) -> void
+{
+    if (error < 0)
+    {
+        std::cerr << "[" << ANSI_RED "Error" << ANSI_CLEAR << "] " << ANSI_RED << msg << ANSI_CLEAR << "\n";
+        exit(1);
+    }
+}
 
 auto main() -> int
 {
@@ -41,10 +61,9 @@ auto main() -> int
               << "maddr=" << mc_addr << "\n";
 
     // create what looks like an ordinary UDP socket
-    if ((server_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
-        perror("socket");
-        exit(1);
+        server_fd = socket(AF_INET, SOCK_DGRAM, 0);
+        exit_on_error(server_fd, "socket");
     }
 
     {
@@ -57,19 +76,17 @@ auto main() -> int
             sizeof(opt)
         );
         // clang-format on
-        if (0 != err)
-        {
-            std::cerr << "setsockopt could not specify REUSEADDR\n";
-            exit(EXIT_FAILURE);
-        }
+        exit_on_error(err, "setsockopt could not specify REUSEADDR");
     }
 
     {
         auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
         if (err != 0)
         {
-            std::cout << "Could not bind mc socket to " << if_name
-                      << ", errno=" << std::to_string(errno) << ":" << strerror(errno) << "\n";
+            std::stringstream ss;
+            ss << "Could not bind mc socket to " << if_name
+                      << ", errno=" << std::to_string(errno) << ":" << strerror(errno);
+            exit_on_error(err, ss.str());
         }
     }
 
@@ -86,21 +103,13 @@ auto main() -> int
     // bind socket
     {
         auto const err = ::bind(server_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr));
-        if (err < 0)
-        {
-            std::cerr << "bind error\n";
-            exit(1);
-        }
+        exit_on_error(err, "bind error");
     }
 
     // Listen
     {
         auto const err = listen(server_fd, 3);
-        if (err < 0)
-        {
-            std::cerr << "listen error\n";
-            exit(1);
-        }
+        exit_on_error(err, "listen error");
     }
 
     // Accept
@@ -111,11 +120,7 @@ auto main() -> int
             reinterpret_cast<struct sockaddr*>(&addr),
             reinterpret_cast<socklen_t*>(&addrlen)
         );
-        if (new_socket < 0)
-        {
-            std::cerr << "accept error\n";
-            exit(1);
-        }
+        exit_on_error(new_socket, "accept error");
     }
 
     {
