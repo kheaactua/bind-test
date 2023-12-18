@@ -16,6 +16,8 @@ cc_defaults {
     srcs: [":bind-test.files"],
     cpp_std: "c++17",
 
+    header_libs: ["libboost_headers"],
+
     cflags: [
         "-DINTERFACE_IP=\"10.7.0.10\"",
         "-DINTERFACE_NAME=\"oem1\"",
