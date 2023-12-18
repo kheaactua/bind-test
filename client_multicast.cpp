@@ -127,7 +127,7 @@ auto client_multicast(
 #ifdef __QNX__
         address2in_addr(if_addr, req.imr_interface);
 #else
-        get_ifindex(if_name, &req.imr_ifindex);
+        req.imr_ifindex = get_ifindex(if_name);
 #endif
 
         // clang-format off

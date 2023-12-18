@@ -19,7 +19,7 @@ auto print_msg(std::string&& msg) -> void
 auto info(Component c, std::string&& msg) -> void
 {
     std::stringstream ss;
-    ss << "[" << ANSI_BLUE "Info" << ANSI_CLEAR << "] ";
+    ss << "[" << ANSI_BLUE << "Info" << ANSI_CLEAR << "] ";
     ss << component_to_str(c);
     ss << ": " << ANSI_BLUE << msg << ANSI_CLEAR;
 

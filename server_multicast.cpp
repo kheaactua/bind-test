@@ -60,7 +60,7 @@ auto multicast_server(
         address2in_addr(if_addr, req.imr_interface);
 #else
         // req.imr_ifindex = 0; // ANY interface!
-        get_ifindex(if_name, &req.imr_ifindex);
+        req.imr_ifindex = get_ifindex(if_name);
 #endif
 
         // clang-format off

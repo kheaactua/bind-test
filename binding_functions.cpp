@@ -10,7 +10,6 @@
 #endif
 
 #include <iostream>
-#include <netinet/in.h>
 #include <sstream>
 #include <string>
 
@@ -70,8 +69,8 @@ auto ip_mreq2str(IP_REQ const& req) -> std::string
 
 auto set_mc_bound_2(
     int /* sock_fd */,
-    boost::asio::ip::address /* mc_addr */,
-    boost::asio::ip::address /* if_addr */,
+    boost::asio::ip::address const& /* mc_addr */,
+    boost::asio::ip::address const& /* if_addr */,
     std::string const& /* if_name */) -> int
 {
     // Following
@@ -190,7 +189,7 @@ auto get_bound_device(int sock_fd) -> std::string
 {
     std::array<char, 10> dev_name;
     socklen_t dev_name_len = 0;
-    auto err = ::getsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, &dev_name[0], &dev_name_len);
+    auto err = ::getsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, dev_name.data(), &dev_name_len);
     std::string dev_name_str(std::begin(dev_name), std::begin(dev_name) + dev_name_len);
     if (err < 0)
     {
@@ -233,9 +232,11 @@ auto get_ifname(unsigned int if_index, std::string& if_name) -> int
     return 0;
 }
 
-auto get_ifindex(std::string const& if_name, int* const if_index) -> void
+#ifndef __QNX__
+auto get_ifindex(std::string const& if_name) -> decltype(IP_REQ::imr_ifindex)
 {
     struct if_nameindex *if_ni = nullptr, *i = nullptr;
+    decltype(if_nameindex::if_index) if_index = 0;
 
     if_ni = ::if_nameindex();
     if (nullptr == if_ni)
@@ -250,10 +251,13 @@ auto get_ifindex(std::string const& if_name, int* const if_index) -> void
         //           << " name=" << i->if_name << "\n";
         if (0 == std::strncmp(i->if_name, if_name.c_str(), if_name.size()))
         {
-            *if_index = i->if_index;
+            if_index = i->if_index;
             break;
         }
     }
 
     if_freenameindex(if_ni);
+
+    return static_cast<decltype(IP_REQ::imr_ifindex)>(if_index);
 }
+#endif
