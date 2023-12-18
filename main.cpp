@@ -144,24 +144,21 @@ auto server(
     }
 
     {
-        for (int i = 0; i < 2; i++)
-        {
-            std::string hello;
-            hello = "hello" + std::to_string(i);
-            // clang-format off
-            auto const err = ::sendto(
-                server_fd,
-                hello.c_str(),
-                hello.size(),
-                MSG_CONFIRM,
-                reinterpret_cast<const struct sockaddr *>(&client_addr),
-                sizeof(client_addr)
-            );
-            // clang-format on
-            exit_on_error(err, Component::server, "Could not send hello message");
-            std::cout << "[Info] Service: Hello message sent\n";
-            std::this_thread::sleep_for(500ms);
-        }
+        std::string hello;
+        hello = "hello from server (1)";
+        // clang-format off
+        auto const err = ::sendto(
+            server_fd,
+            hello.c_str(),
+            hello.size(),
+            MSG_CONFIRM,
+            reinterpret_cast<const struct sockaddr *>(&client_addr),
+            sizeof(client_addr)
+        );
+        // clang-format on
+        exit_on_error(err, Component::server, "Could not send hello message");
+        std::cout << "[Info] Service: Hello message sent\n";
+        std::this_thread::sleep_for(500ms);
     }
 
     // use setsockopt() to request that the kernel join a multicast group
@@ -174,7 +171,7 @@ auto server(
     //     exit(1);
     // }
 
-    std::cout << "[Info] Service: Closing";
+    std::cout << "[Info] Service: Closing\n";
     close(server_fd);
 }
 
@@ -197,24 +194,21 @@ auto client(
     serv_addr.sin_port   = htons(port);
 
     {
-        for (int i = 0; i < 1; i++)
-        {
-            std::string hello;
-            hello = "hello" + std::to_string(i);
-            // clang-format off
-            auto const err = ::sendto(
-                sock_fd,
-                hello.c_str(),
-                hello.size(),
-                MSG_CONFIRM,
-                reinterpret_cast<const struct sockaddr *>(&serv_addr),
-                sizeof(serv_addr)
-            );
-            // clang-format on
-            exit_on_error(err, Component::client, "Could not send hello message");
-            std::cout << "[Info] Client: Hello message sent\n";
-            std::this_thread::sleep_for(500ms);
-        }
+        std::string hello;
+        hello = "hello from client (1)";
+        // clang-format off
+        auto const err = ::sendto(
+            sock_fd,
+            hello.c_str(),
+            hello.size(),
+            MSG_CONFIRM,
+            reinterpret_cast<const struct sockaddr *>(&serv_addr),
+            sizeof(serv_addr)
+        );
+        // clang-format on
+        exit_on_error(err, Component::client, "Could not send hello message");
+        std::cout << "[Info] Client: Hello message sent\n";
+        std::this_thread::sleep_for(500ms);
     }
 
     auto len = static_cast<socklen_t>(sizeof(client_addr));
@@ -234,7 +228,7 @@ auto client(
         std::cout << "[Info] Client: Read: " << buffer.data() << "\n";
     }
 
-    std::cout << "[Info] Client: Closing";
+    std::cout << "[Info] Client: Closing\n";
     return 0;
 }
 
