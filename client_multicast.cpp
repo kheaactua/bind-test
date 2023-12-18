@@ -108,8 +108,6 @@ auto client_multicast(
         address2in_addr(mc_addr, mcast_group.sin_addr);
         mcast_group.sin_port = htons(port);
 
-        // setsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, if_name.c_str(), if_name.size());
-
         // clang-format off
         auto const err = ::bind(
             sock_fd,
@@ -117,9 +115,14 @@ auto client_multicast(
             sizeof(mcast_group)
         );
         // clang-format on
-        exit_on_error(err, Component::server, "bind error");
+        auto const errno_b = errno;
 
         std::stringstream ss;
+        ss << "Could not bind to " << ::inet_ntoa(mcast_group.sin_addr)
+           << " : Error: " << strerror(errno_b);
+        exit_on_error(err, Component::client, ss.str());
+        ss.str("");
+
         ss << "Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
            << ntohs(mcast_group.sin_port);
         info(Component::client, ss.str());
