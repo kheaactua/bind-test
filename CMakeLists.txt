@@ -51,6 +51,19 @@ target_sources(bind-test
   PRIVATE
     binding_functions.hpp
     binding_functions.cpp
+
+    components.hpp
+    components.cpp
+
+    logging.hpp
+    logging.cpp
+
+    server_multicast.cpp
+    client_multicast.cpp
+
+    # server_unicast.cpp
+    # client_unicast.cpp
+
     main.cpp
 )
 target_include_directories(bind-test
