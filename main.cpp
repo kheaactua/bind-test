@@ -237,7 +237,7 @@ auto multicast_server(
         client_addr.sin_port = ::htons(port);
 
         std::string hello;
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 5; i++)
         {
             hello = "hello from server (" + std::to_string(i) + ")";
             // clang-format off
@@ -296,27 +296,35 @@ auto client(
         std::cout << "[INFO] Client: Server started\n";
     }
 
-    serv_addr.sin_family = AF_INET;
-    address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
-    serv_addr.sin_port = htons(port);
-
     {
-        std::string hello;
-        hello = "hello from client (1)";
-        // clang-format off
-        auto const err = ::sendto(
-            sock_fd,
-            hello.c_str(),
-            hello.size(),
-            MSG_CONFIRM,
-            reinterpret_cast<const struct sockaddr *>(&serv_addr),
-            sizeof(serv_addr)
-        );
-        // clang-format on
-        exit_on_error(err, Component::client, "Could not send hello message");
-        std::cout << "[Info] Client: Hello message sent\n";
-        std::this_thread::sleep_for(500ms);
+        auto const err = set_mc_bound_2(sock_fd, mc_addr, if_addr, if_name);
+        std::stringstream ss;
+        ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
+           << ":" << strerror(errno);
+        exit_on_error(err, Component::server, ss.str());
+
+        // serv_addr.sin_family = AF_INET;
+        // address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
+        // serv_addr.sin_port = htons(port);
     }
+
+    // {
+    //     std::string hello;
+    //     hello = "hello from client (1)";
+    //     // clang-format off
+    //     auto const err = ::sendto(
+    //         sock_fd,
+    //         hello.c_str(),
+    //         hello.size(),
+    //         MSG_CONFIRM,
+    //         reinterpret_cast<const struct sockaddr *>(&serv_addr),
+    //         sizeof(serv_addr)
+    //     );
+    //     // clang-format on
+    //     exit_on_error(err, Component::client, "Could not send hello message");
+    //     std::cout << "[Info] Client: Hello message sent\n";
+    //     std::this_thread::sleep_for(500ms);
+    // }
 
     auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
@@ -367,18 +375,18 @@ auto main() -> int
         std::ref(server_started_mutex),
         std::ref(server_started_cv));
 
-    // auto client_thread = std::thread(
-    //     &client,
-    //     if_addr,
-    //     if_name,
-    //     mc_addr,
-    //     port,
-    //     std::ref(server_started),
-    //     std::ref(server_started_mutex),
-    //     std::ref(server_started_cv));
+    auto client_thread = std::thread(
+        &client,
+        if_addr,
+        if_name,
+        mc_addr,
+        port,
+        std::ref(server_started),
+        std::ref(server_started_mutex),
+        std::ref(server_started_cv));
 
     service_thread.join();
-    // client_thread.join();
+    client_thread.join();
 
     return 0;
 }
