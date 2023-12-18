@@ -45,20 +45,11 @@ auto multicast_client(
     {
         int const opt = 1; // Positive value for re-use
         // clang-format off
-        auto const err = ::setsockopt(
-            sock_fd,
-            SOL_SOCKET,
-#ifdef __QNX__
-            // TODO not sure why I appear to need this
-            SO_REUSEPORT,
-#else
-            SO_REUSEADDR | SO_REUSEPORT,
-#endif
-            &opt,
-            sizeof(opt)
-        );
+        auto const err1 = ::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+        exit_on_error(err1, Component::client, "setsockopt could not specify REUSEADDR");
+        auto const err2 = ::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+        exit_on_error(err2, Component::client, "setsockopt could not specify REUSEPORT");
         // clang-format on
-        exit_on_error(err, Component::client, "setsockopt could not specify REUSEADDR");
     }
 
     {
