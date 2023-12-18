@@ -231,27 +231,13 @@ auto multicast_server(
         std::cout << "[Info] Service: Notifying that service is bound\n";
     }
 
-    auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
-        std::cout << "[Info] Service: Waiting on message from client\n";
-        std::array<char, 1024> buffer = {0};
-        // clang-format off
-        auto const n = ::recvfrom(
-            server_fd,
-            reinterpret_cast<char *>(buffer.data()),
-            buffer.size()-1,
-            MSG_WAITALL,
-            reinterpret_cast<struct sockaddr *>(&client_addr),
-            reinterpret_cast<socklen_t*>(&len)
-        );
-        // clang-format on
-        buffer[n] = '\0';
-        std::cout << "[Info] Service: Read: " << buffer.data() << "\n";
-    }
+        client_addr.sin_family = AF_INET;
+        address2in_addr(mc_addr, client_addr.sin_addr.s_addr);
+        client_addr.sin_port = ::htons(port);
 
-    {
         std::string hello;
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 10; i++)
         {
             hello = "hello from server (" + std::to_string(i) + ")";
             // clang-format off
@@ -380,18 +366,19 @@ auto main() -> int
         std::ref(server_started),
         std::ref(server_started_mutex),
         std::ref(server_started_cv));
-    auto client_thread = std::thread(
-        &client,
-        if_addr,
-        if_name,
-        mc_addr,
-        port,
-        std::ref(server_started),
-        std::ref(server_started_mutex),
-        std::ref(server_started_cv));
+
+    // auto client_thread = std::thread(
+    //     &client,
+    //     if_addr,
+    //     if_name,
+    //     mc_addr,
+    //     port,
+    //     std::ref(server_started),
+    //     std::ref(server_started_mutex),
+    //     std::ref(server_started_cv));
 
     service_thread.join();
-    client_thread.join();
+    // client_thread.join();
 
     return 0;
 }
