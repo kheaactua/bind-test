@@ -23,7 +23,7 @@ auto exit_on_error(T error, Component c, std::string&& msg) -> void
     {
         std::stringstream ss;
         ss << "[" << ANSI_RED "Error" << ANSI_CLEAR << "] ";
-        ss << component_to_str(c);
+        ss << component_to_str(c, true);
         ss << ": " << ANSI_RED << msg << ANSI_CLEAR;
         print_msg(ss.str());
         exit(1);

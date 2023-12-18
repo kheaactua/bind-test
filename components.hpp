@@ -19,7 +19,7 @@ enum class Component
     client
 };
 
-auto component_to_str(Component c) -> std::string;
+auto component_to_str(Component c, bool decorate = false) -> std::string;
 
 auto multicast_server(
     boost::asio::ip::address const& if_addr,

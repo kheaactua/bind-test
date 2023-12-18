@@ -20,7 +20,7 @@ auto info(Component c, std::string&& msg) -> void
 {
     std::stringstream ss;
     ss << "[" << ANSI_BLUE << "Info" << ANSI_CLEAR << "] ";
-    ss << component_to_str(c);
+    ss << component_to_str(c, true);
     ss << ": " << ANSI_BLUE << msg << ANSI_CLEAR;
 
     print_msg(ss.str());

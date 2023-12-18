@@ -1,17 +1,31 @@
 #include "components.hpp"
+#include "logging.hpp"
 
+#include <sstream>
 #include <string>
 
-auto component_to_str(Component c) -> std::string
+auto component_to_str(Component c, bool const decorate) -> std::string
 {
+    std::stringstream ss;
     switch (c)
     {
         case Component::main:
-            return "main";
+            ss << "main";
+            break;
         case Component::server:
-            return "service";
+            if (decorate)
+                ss << ANSI_MAGENTA;
+            ss << "service";
+            if (decorate)
+                ss << ANSI_CLEAR;
+            break;
         case Component::client:
-            return "client";
+            if (decorate)
+                ss << ANSI_GREEN;
+            ss << "client";
+            if (decorate)
+                ss << ANSI_CLEAR;
+            break;
     }
-    return "unknown";
+    return ss.str();
 }
