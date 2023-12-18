@@ -37,7 +37,7 @@ auto client_multicast(
     {
         std::unique_lock<std::mutex> lk(server_started_mutex);
         server_started_cv.wait(lk, [&server_started] { return server_started; });
-        info(Component::server, "Server started");
+        info(Component::client, "Server started");
     }
 
     {
@@ -109,7 +109,7 @@ auto client_multicast(
         std::stringstream ss;
         ss << "Could not specify " << ::inet_ntoa(mc_if_addr)
            << " as the associated address.  Error: " << strerror(errno);
-        exit_on_error(err, Component::server, ss.str());
+        exit_on_error(err, Component::client, ss.str());
         ss.str("");
 
         ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
@@ -160,7 +160,7 @@ auto client_multicast(
             sizeof(req)
         );
         // clang-format on
-        exit_on_error(err, Component::server, "Add membership error");
+        exit_on_error(err, Component::client, "Add membership error");
     }
 
     // {
