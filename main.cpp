@@ -1,8 +1,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#include <concepts>
 #include <chrono>
+#include <concepts>
 #include <iostream>
 #include <sstream>
 #include <string_view>
@@ -34,7 +34,8 @@
 // Playing with code from:
 // https://www.geeksforgeeks.org/udp-server-client-implementation-c/
 
-enum class Component {
+enum class Component
+{
     main = 0,
     server,
     client
@@ -60,8 +61,7 @@ auto exit_on_error(T error, Component c, std::string&& msg) -> void
                 std::cerr << "client";
                 break;
         }
-        std::cerr << ": " << ANSI_RED << msg << ANSI_CLEAR
-                  << "\n";
+        std::cerr << ": " << ANSI_RED << msg << ANSI_CLEAR << "\n";
         exit(1);
     }
 }
@@ -72,10 +72,12 @@ auto server(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port
-) -> void
+    int port) -> void
 {
-    struct sockaddr_in serv_addr{0}, client_addr{0};
+    struct sockaddr_in serv_addr
+    {
+        0
+    }, client_addr{0};
     int server_fd = 0;
 
     {
@@ -96,13 +98,13 @@ auto server(
         exit_on_error(err, Component::server, "setsockopt could not specify REUSEADDR");
     }
 
-    // {
-    //     auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
-    //     std::stringstream ss;
-    //     ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
-    //        << ":" << strerror(errno);
-    //     exit_on_error(err, ss.str());
-    // }
+    {
+        auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
+        std::stringstream ss;
+        ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
+           << ":" << strerror(errno);
+        exit_on_error(err, Component::server, ss.str());
+    }
 
     // bind socket
     {
@@ -180,7 +182,10 @@ auto client(
     int port) -> int
 {
     int sock_fd = 0;
-    struct sockaddr_in serv_addr{0}, client_addr{0};
+    struct sockaddr_in serv_addr
+    {
+        0
+    }, client_addr{0};
 
     {
         sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -189,7 +194,7 @@ auto client(
 
     serv_addr.sin_family = AF_INET;
     address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
-    serv_addr.sin_port   = htons(port);
+    serv_addr.sin_port = htons(port);
 
     {
         std::string hello;
@@ -234,8 +239,8 @@ auto main() -> int
 {
     auto const if_addr = boost::asio::ip::make_address(INTERFACE_IP);
     std::string if_name{INTERFACE_NAME};
-    auto const mc_addr = boost::asio::ip::make_address(MULTICAST_ADDR);
-    int const port     = 30511;
+    auto const mc_addr        = boost::asio::ip::make_address(MULTICAST_ADDR);
+    static int constexpr port = 30512;
 
     std::cout << "[INFO] Input: "
               << "if=" << if_name << ", "
@@ -243,7 +248,7 @@ auto main() -> int
               << "maddr=" << mc_addr << "\n";
 
     auto service_thread = std::thread(&server, if_addr, if_name, mc_addr, port);
-    auto client_thread = std::thread(&client, if_addr, if_name, mc_addr, port);
+    auto client_thread  = std::thread(&client, if_addr, if_name, mc_addr, port);
 
     service_thread.join();
     client_thread.join();
