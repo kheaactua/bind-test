@@ -15,11 +15,6 @@
 
 #include <boost/asio/ip/address.hpp>
 
-// auto address2in_addr(boost::asio::ip::address const& addr, in_addr_t& dest) -> void
-// {
-//     auto const a = addr.to_v4().to_bytes();
-//     std::memcpy(&dest, a.data(), a.size());
-// }
 
 auto address2in_addr(boost::asio::ip::address const& addr, in_addr& dest) -> void
 {
@@ -27,21 +22,6 @@ auto address2in_addr(boost::asio::ip::address const& addr, in_addr& dest) -> voi
     std::memcpy(&(dest.s_addr), a.data(), a.size());
 }
 
-// #ifdef __QNX__
-// auto ip_mreq2str(ifreq const& req) -> std::string
-// {
-//     std::stringstream rss;
-//     // clang-format off
-//     rss << "req{"
-//        // << "multiaddr=\"" << ::inet_ntoa(req.ifru_broadaddr) << "\","
-//        // << "daddr=\"" << ::inet_ntoa(req.ifru_dstaddr) << "\","
-//        // << "addr=\"" << ::inet_ntoa(req.ifru_addr) << "\","
-//        << "if=\"" << req.ifr_name << "\""
-//        << "}";
-//     // clang-format on
-//     return rss.str();
-// }
-// #endif
 auto ip_mreq2str(IP_REQ const& req) -> std::string
 {
     std::stringstream rss;
