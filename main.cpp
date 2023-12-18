@@ -99,7 +99,8 @@ auto main() -> int
         address2in_addr(if_addr, addr.sin_addr.s_addr);
         addr.sin_port = ::htons(port);
 
-        std::cout << "[INFO] Binding to " << ::inet_ntoa(addr.sin_addr) << ":" << ::ntohs(addr.sin_port) << "\n";
+        std::cout << "[INFO] Binding to " << ::inet_ntoa(addr.sin_addr) << ":"
+                  << ::ntohs(addr.sin_port) << "\n";
 
         // clang-format off
         auto const err = ::bind(
@@ -125,12 +126,13 @@ auto main() -> int
             reinterpret_cast<struct sockaddr*>(&addr),
             reinterpret_cast<socklen_t*>(&addrlen)
         );
+        // clang-format on
         exit_on_error(new_socket, "accept error");
     }
 
     {
         std::array<char, 1024> buffer = {0};
-        auto const valread = ::read(new_socket, buffer.data(), buffer.size());
+        auto const valread            = ::read(new_socket, buffer.data(), buffer.size());
         exit_on_error(valread, "read error");
         std::cout << "Read: " << buffer.data() << "\n";
     }
