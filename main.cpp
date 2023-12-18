@@ -31,20 +31,19 @@
 namespace boost
 {
 
-template<class E> inline void throw_exception(E const & e)
+template <class E> inline void throw_exception(E const& e)
 {
     std::cout << "Boost exception thrown! " << e;
 }
 
-}
+} // namespace boost
 #endif
-
 
 auto main() -> int
 {
     auto const if_addr = boost::asio::ip::make_address(INTERFACE_IP);
     std::string if_name{INTERFACE_NAME};
-    auto const mc_addr        = boost::asio::ip::make_address(MULTICAST_ADDR);
+    auto const mc_addr                       = boost::asio::ip::make_address(MULTICAST_ADDR);
     static short unsigned int constexpr port = PORT;
 
     std::mutex component_ready;
@@ -72,8 +71,7 @@ auto main() -> int
         std::ref(server_ready),
         std::ref(server_ready_cv),
         std::ref(client_ready),
-        std::ref(client_ready_cv)
-    );
+        std::ref(client_ready_cv));
 
     auto client_thread = std::thread(
         &multicast_client,
