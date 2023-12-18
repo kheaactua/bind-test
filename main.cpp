@@ -90,7 +90,7 @@ auto unicast_server(
     }
 
     {
-        int const opt = 1; // Not sure what this is
+        int const opt = 1; // Positive value for re-use
         // clang-format off
         auto const err = ::setsockopt(
             server_fd, SOL_SOCKET,
@@ -201,16 +201,26 @@ auto multicast_server(
     }
 
     {
-        auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
-        std::stringstream ss;
-        ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
-           << ":" << strerror(errno);
-        exit_on_error(err, Component::server, ss.str());
+        // auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
+        // std::stringstream ss;
+        // ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
+        //    << ":" << strerror(errno);
+        // exit_on_error(err, Component::server, ss.str());
 
-        // // set up unicast addresses
-        // serv_addr.sin_family = AF_INET;
-        // address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
-        // serv_addr.sin_port = ::htons(port);
+        ip_mreqn req;
+        address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
+        req.imr_ifindex = 0;
+
+        // clang-format off
+        auto const err = setsockopt(
+            server_fd,
+            IPPROTO_IP,
+            IP_ADD_MEMBERSHIP,
+            &req,
+            sizeof(req)
+        );
+        // clang-format on
+        exit_on_error(err, Component::server, "Add membership error");
     }
 
     // bind socket
@@ -279,8 +289,9 @@ auto client(
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> int
 {
+    // http://www.cs.tau.ac.il/~eddiea/samples/Multicast/multicast-listen.c.html
     int sock_fd = 0;
-    struct sockaddr_in serv_addr
+    struct sockaddr_in mcast_group
     {
         0
     }, client_addr{0};
@@ -297,15 +308,56 @@ auto client(
     }
 
     {
-        auto const err = set_mc_bound_2(sock_fd, mc_addr, if_addr, if_name);
-        std::stringstream ss;
-        ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
-           << ":" << strerror(errno);
-        exit_on_error(err, Component::server, ss.str());
+        int const opt = 1; // Positive value for re-use
+        // clang-format off
+        auto const err = ::setsockopt(
+            sock_fd,
+            SOL_SOCKET,
+            SO_REUSEADDR | SO_REUSEPORT,
+            &opt,
+            sizeof(opt)
+        );
+        // clang-format on
+        exit_on_error(err, Component::server, "setsockopt could not specify REUSEADDR");
+    }
 
-        // serv_addr.sin_family = AF_INET;
-        // address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
-        // serv_addr.sin_port = htons(port);
+    {
+        mcast_group.sin_family = AF_INET;
+        address2in_addr(mc_addr, mcast_group.sin_addr.s_addr);
+        mcast_group.sin_port = htons(port);
+
+        // setsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, if_name.c_str(), if_name.size());
+
+        // clang-format off
+        auto const err = ::bind(
+            sock_fd,
+            reinterpret_cast<struct sockaddr*>(&mcast_group),
+            sizeof(mcast_group)
+        );
+        // clang-format on
+        exit_on_error(err, Component::server, "bind error");
+        std::stringstream ss;
+        std::cout << "[Info] Client: Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
+                  << ::ntohs(mcast_group.sin_port) << "\n";
+    }
+
+    {
+        // Preparatios for using Multicast
+
+        ip_mreqn req;
+        req.imr_multiaddr = mcast_group.sin_addr;
+        req.imr_ifindex   = 0;
+
+        // clang-format off
+        auto const err = setsockopt(
+            sock_fd,
+            IPPROTO_IP,
+            IP_ADD_MEMBERSHIP,
+            &req,
+            sizeof(req)
+        );
+        // clang-format on
+        exit_on_error(err, Component::server, "Add membership error");
     }
 
     // {
@@ -317,8 +369,8 @@ auto client(
     //         hello.c_str(),
     //         hello.size(),
     //         MSG_CONFIRM,
-    //         reinterpret_cast<const struct sockaddr *>(&serv_addr),
-    //         sizeof(serv_addr)
+    //         reinterpret_cast<const struct sockaddr *>(&mcast_group),
+    //         sizeof(mcast_group)
     //     );
     //     // clang-format on
     //     exit_on_error(err, Component::client, "Could not send hello message");
@@ -335,7 +387,7 @@ auto client(
             reinterpret_cast<char *>(buffer.data()),
             buffer.size()-1,
             MSG_WAITALL,
-            reinterpret_cast<struct sockaddr *>(&serv_addr),
+            reinterpret_cast<struct sockaddr *>(&mcast_group),
             reinterpret_cast<socklen_t*>(&len)
         );
         // clang-format on

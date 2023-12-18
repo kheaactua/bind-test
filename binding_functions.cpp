@@ -1,6 +1,7 @@
 #include "binding_functions.hpp"
 
 #include <iostream>
+#include <netinet/in.h>
 #include <sstream>
 #include <string>
 
@@ -51,7 +52,8 @@ auto set_mc_bound_2(
     if (err == 0)
     {
         std::cout << __func__
-                  << " Successful call to setsockopt(SO_BINDTODEVICE) if_name=" << if_name << "\n";
+                  << " Successful call to setsockopt(SO_BINDTODEVICE) if_name=" << if_name <<
+                  "\n";
     }
     else
     {
