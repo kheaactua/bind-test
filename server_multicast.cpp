@@ -43,20 +43,21 @@ auto multicast_server(
         int const opt = 1; // Positive value for re-use
         // clang-format off
         auto const err = ::setsockopt(
-            sock_fd, SOL_SOCKET,
-            SO_REUSEADDR | SO_REUSEPORT,
+            sock_fd,
+            SOL_SOCKET,
+            // SO_REUSEADDR | SO_REUSEPORT,
+            SO_REUSEADDR,
             &opt,
             sizeof(opt)
         );
         // clang-format on
-        exit_on_error(err, Component::server, "setsockopt could not specify REUSEADDR");
+        exit_on_error(err, Component::server, "setsockopt could not specify REUSEADDR|REUSEPORT");
     }
 
     {
         IP_REQ req;
         address2in_addr(mc_addr, req.imr_multiaddr);
 #ifdef __QNX__
-        // http://www.qnx.com/developers/docs/7.1/index.html#com.qnx.doc.neutrino.lib_ref/topic/i/ip_proto.html
         address2in_addr(if_addr, req.imr_interface);
 #else
         // req.imr_ifindex = 0; // ANY interface!
@@ -88,6 +89,7 @@ auto multicast_server(
         // Bind to device.  Right now the effect is that the client won't
         // receive messages.
 
+        std::stringstream ss;
         // clang-format off
 #ifdef __QNX__
         ifreq req;
@@ -99,7 +101,7 @@ auto multicast_server(
             &req,
             static_cast<socklen_t>(sizeof(req))
         );
-        std::string const tmp_if_name{req.ifr_name};
+        ss << "Could not bind multicast to \"" << req.ifr_name;
 #else
         auto const err = setsockopt(
             sock_fd,
@@ -108,11 +110,10 @@ auto multicast_server(
             if_name.c_str(),
             static_cast<socklen_t>(if_name.size())
         );
-        std::string const tmp_if_name{if_name};
+        ss << "Could not bind multicast to \"" << if_name;
 #endif
         // clang-format on
-        std::stringstream ss;
-        ss << "Could not bind multicast to \"" << tmp_if_name << "\": errno=" << std::to_string(errno)
+        ss << "\": errno=" << std::to_string(errno)
            << ":" << strerror(errno);
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
