@@ -13,6 +13,7 @@ namespace boost::asio::ip
 struct ip_mreqn;
 
 auto address2in_addr(boost::asio::ip::address const& addr, in_addr_t& dest) -> void;
+auto address2in_addr(boost::asio::ip::address const& addr, in_addr& dest) -> void;
 
 #ifdef __QNX__
 struct ifreq;
@@ -31,6 +32,8 @@ auto set_mc_bound_2(
 auto get_bound_device(int sockfd) -> std::string;
 
 auto get_ifname(unsigned int if_index, std::string& if_name) -> int;
-auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> unsigned int;
+// TODO remove the return value, and fix the function
+auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> void;
+auto get_ifindex(std::string const& if_name, int* const if_index) -> void;
 
 #endif /* end of include guard: BINDING_FUNCTIONS_HPP_PDKYFOSL */

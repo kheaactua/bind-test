@@ -67,6 +67,7 @@ auto client_multicast(
         ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
            << ":" << strerror(errno);
         exit_on_error(err, Component::client, ss.str());
+        ss.str("");
 
         ss << "Bound to interface \"" << if_name << "\"";
         info(Component::server, ss.str());
@@ -123,6 +124,7 @@ auto client_multicast(
         );
         // clang-format on
         exit_on_error(err, Component::server, "bind error");
+
         std::stringstream ss;
         ss << "Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
            << ntohs(mcast_group.sin_port);

@@ -19,7 +19,21 @@
 auto address2in_addr(boost::asio::ip::address const& addr, in_addr_t& dest) -> void
 {
     auto const a = addr.to_v4().to_bytes();
+// #ifdef __QNX__
+//     std::memcpy(&(dest.s_addr), a.data(), a.size());
+// #else
     std::memcpy(&dest, a.data(), a.size());
+// #endif
+}
+
+auto address2in_addr(boost::asio::ip::address const& addr, in_addr& dest) -> void
+{
+    auto const a = addr.to_v4().to_bytes();
+// #ifdef __QNX__
+    std::memcpy(&(dest.s_addr), a.data(), a.size());
+// #else
+//     std::memcpy(&dest, a.data(), a.size());
+// #endif
 }
 
 #ifdef __QNX__
@@ -216,7 +230,7 @@ auto get_ifname(unsigned int if_index, std::string& if_name) -> int
     return 0;
 }
 
-auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> unsigned int
+auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> void
 {
 #if 0
     ifaddrs *if_arr=nullptr, *if_int=nullptr;
@@ -246,9 +260,8 @@ auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> un
     if_ni = ::if_nameindex();
     if (nullptr == if_ni)
     {
-        perror("if_nameindex");
+        std::cerr << "Error calling if_nameindex\n";
         exit(EXIT_FAILURE);
-        return 0;
     }
 
     for (i = if_ni; !(i->if_index == 0 && nullptr == i->if_name); i++)
@@ -264,6 +277,11 @@ auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> un
 
     if_freenameindex(if_ni);
 #endif
-
-    return 0;
 }
+
+auto get_ifindex(std::string const& if_name, int* const if_index) -> void
+{
+    unsigned int tmp_index = 0;
+    get_ifindex(if_name, &tmp_index);
+    *if_index = static_cast<decltype(tmp_index)>(tmp_index);
+};

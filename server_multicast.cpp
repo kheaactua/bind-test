@@ -24,7 +24,7 @@ auto multicast_server(
     boost::asio::ip::address const& mc_addr,
     short unsigned int port,
     bool& server_started,
-    std::mutex& server_started_mutex,
+    std::mutex& /* server_started_mutex */,
     std::condition_variable& server_started_cv) -> void
 {
     struct sockaddr_in serv_addr, client_addr;
@@ -53,9 +53,11 @@ auto multicast_server(
 
     {
 #ifdef __QNX__
-        ifreq req;
-        // address2in_addr(mc_addr, req.ifru_broadaddr.s_addr);
-        std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
+        // http://www.qnx.com/developers/docs/7.1/index.html#com.qnx.doc.neutrino.lib_ref/topic/i/ip_proto.html
+        ip_mreq req;
+        address2in_addr(mc_addr, req.imr_multiaddr);
+        address2in_addr(if_addr, req.imr_interface);
+        // std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
 #else
         ip_mreqn req;
         address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
@@ -100,6 +102,7 @@ auto multicast_server(
         ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
            << ":" << strerror(errno);
         exit_on_error(err, Component::server, ss.str());
+        ss.str("");
 
         ss << "Bound to interface \"" << if_name << "\"";
         info(Component::server, ss.str());
@@ -109,7 +112,8 @@ auto multicast_server(
 #ifdef __QNX__
         ifreq req;
         // address2in_addr(if_addr, req.imr_address.s_addr);
-        // address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
+        // address2in_addr(mc_addr, req.ifu_b.ifru_broadaddr.s_addr);
+        // address2in_addr(mc_addr, req.ifr_broadaddr.s_addr);
         std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
 #else
         ip_mreqn req;
