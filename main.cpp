@@ -201,11 +201,16 @@ auto multicast_server(
     }
 
     {
-        auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
-        std::stringstream ss;
-        ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
-           << ":" << strerror(errno);
-        exit_on_error(err, Component::server, ss.str());
+        // auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
+        // std::stringstream ss;
+        // ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
+        //    << ":" << strerror(errno);
+        // exit_on_error(err, Component::server, ss.str());
+
+        // set up unicast addresses
+        serv_addr.sin_family = AF_INET;
+        address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
+        serv_addr.sin_port = ::htons(port);
     }
 
     // bind socket
@@ -228,6 +233,7 @@ auto multicast_server(
 
     auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
+        std::cout << "[Info] Service: Waiting on message from client\n";
         std::array<char, 1024> buffer = {0};
         // clang-format off
         auto const n = ::recvfrom(
@@ -344,6 +350,8 @@ auto client(
     }
 
     std::cout << "[Info] Client: Closing\n";
+    close(sock_fd);
+
     return 0;
 }
 
@@ -383,7 +391,7 @@ auto main() -> int
         std::ref(server_started_cv));
 
     service_thread.join();
-    // client_thread.join();
+    client_thread.join();
 
     return 0;
 }
