@@ -24,9 +24,7 @@ cmake_package(
 	source = bind_test_source,
 	use_pbos=False,
 
-	dependencies = [
-		"boost",
-	],
+	dependencies = ["boost"],
 
 	configure_instructions = [
 		configure_options("{defaults} {common} {preset}".format(
@@ -49,9 +47,8 @@ cmake_package(
 
 	install_staging_instructions = [
 		make_environment("${QNXSDP_ENV} "),
-		make_options(),
 		make(
-			args="-f%s/bind-test.mk"MODULE_PATH,
+			args="-f%s/bind-test.mk"%MODULE_PATH,
 			target="install",
 			working_directory=""
 		),
@@ -59,7 +56,7 @@ cmake_package(
 )
 
 cmake_host_package(
-	"bind-test",
+	"host-bind-test",
 	local_override = True,
 	source = bind_test_source,
 	use_pbos=False,
@@ -89,9 +86,8 @@ cmake_host_package(
 
 	install_staging_instructions = [
 		make_environment("${QNXSDP_ENV} "),
-		make_options(),
 		make(
-			args="-f%s/bind-test.mk"MODULE_PATH,
+			args="-f%s/bind-test.mk"%MODULE_PATH,
 			target="install",
 			working_directory=""
 		),

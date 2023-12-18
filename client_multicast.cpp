@@ -15,17 +15,18 @@ auto client_multicast(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port,
+    short unsigned int port,
     bool const& server_started,
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> int
 {
     // http://www.cs.tau.ac.il/~eddiea/samples/Multicast/multicast-listen.c.html
     int sock_fd = 0;
-    struct sockaddr_in mcast_group
-    {
-        0
-    }, client_addr{0};
+    struct sockaddr_in mcast_group, client_addr;
+
+    std::memset(&mcast_group, 0, sizeof(mcast_group));
+    std::memset(&client_addr, 0, sizeof(client_addr));
+
 
     {
         sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -72,10 +73,15 @@ auto client_multicast(
     }
 
     {
+#ifdef __QNX__
+        ifreq req;
+        std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
+#else
         ip_mreqn req;
         address2in_addr(if_addr, req.imr_address.s_addr);
         address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
         get_ifindex(if_name, &req.imr_ifindex);
+#endif
         auto const mreq_str = ip_mreqn2str(req);
 
         // clang-format off
@@ -100,7 +106,11 @@ auto client_multicast(
 
     {
         mcast_group.sin_family = AF_INET;
+#ifdef __QNX__
+        // TODO
+#else
         address2in_addr(mc_addr, mcast_group.sin_addr.s_addr);
+#endif
         mcast_group.sin_port = htons(port);
 
         // setsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, if_name.c_str(), if_name.size());
@@ -115,16 +125,20 @@ auto client_multicast(
         exit_on_error(err, Component::server, "bind error");
         std::stringstream ss;
         ss << "Bound to " << ::inet_ntoa(mcast_group.sin_addr) << ":"
-           << ::ntohs(mcast_group.sin_port);
+           << ntohs(mcast_group.sin_port);
         info(Component::client, ss.str());
     }
 
     {
         // Preparatios for using Multicast
 
+#ifdef __QNX__
+        ifreq req;
+#else
         ip_mreqn req;
         req.imr_multiaddr = mcast_group.sin_addr;
         req.imr_ifindex   = 0;
+#endif
 
         // clang-format off
         auto const err = setsockopt(
@@ -162,14 +176,14 @@ auto client_multicast(
         // clang-format off
         auto const n = ::recvfrom(
             sock_fd,
-            reinterpret_cast<char *>(buffer.data()),
+            buffer.data(),
             buffer.size()-1,
             MSG_WAITALL,
             reinterpret_cast<struct sockaddr *>(&mcast_group),
-            reinterpret_cast<socklen_t*>(&len)
+            &len
         );
         // clang-format on
-        buffer[n] = '\0';
+        buffer[static_cast<decltype(buffer)::size_type>(n)] = '\0';
 
         std::stringstream ss;
         ss << "Read: " << buffer.data();

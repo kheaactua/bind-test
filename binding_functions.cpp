@@ -1,5 +1,14 @@
 #include "binding_functions.hpp"
 
+#include <sys/socket.h>
+
+#ifdef __QNX__
+#include <sys/types.h>
+#else
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#endif
+
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
@@ -13,6 +22,21 @@ auto address2in_addr(boost::asio::ip::address const& addr, in_addr_t& dest) -> v
     std::memcpy(&dest, a.data(), a.size());
 }
 
+#ifdef __QNX__
+auto ip_mreqn2str(ifreq const& req) -> std::string
+{
+    std::stringstream rss;
+    // clang-format off
+    rss << "req{"
+       // << "multiaddr=\"" << ::inet_ntoa(req.ifru_broadaddr) << "\","
+       // << "daddr=\"" << ::inet_ntoa(req.ifru_dstaddr) << "\","
+       // << "addr=\"" << ::inet_ntoa(req.ifru_addr) << "\","
+       << "if=\"" << req.ifr_name << "\""
+       << "}";
+    // clang-format on
+    return rss.str();
+}
+#else
 auto ip_mreqn2str(ip_mreqn const& req) -> std::string
 {
     std::stringstream rss;
@@ -25,16 +49,18 @@ auto ip_mreqn2str(ip_mreqn const& req) -> std::string
     // clang-format on
     return rss.str();
 }
+#endif
 
 auto set_mc_bound_2(
-    int sockfd,
-    boost::asio::ip::address mc_addr,
-    boost::asio::ip::address if_addr,
-    std::string const& if_name) -> int
+    int /* sock_fd */,
+    boost::asio::ip::address /* mc_addr */,
+    boost::asio::ip::address /* if_addr */,
+    std::string const& /* if_name */) -> int
 {
     // Following
     // https://stackoverflow.com/a/23718680/1861346
 
+    /*
     // """
     // you can send out packets through the interface ETH1,
     // but you can only recv packets send out from the ip associated with ETH1,
@@ -42,7 +68,7 @@ auto set_mc_bound_2(
     // """
     // clang-format off
     auto const err = setsockopt(
-        sockfd,
+        sock_fd,
         SOL_SOCKET,
         SO_BINDTODEVICE,
         if_name.c_str(),
@@ -87,7 +113,7 @@ auto set_mc_bound_2(
 
         // clang-format off
         auto const err = ::setsockopt(
-            sockfd,
+            sock_fd,
             IPPROTO_IP,
             IP_MULTICAST_IF,
             &req,
@@ -139,14 +165,15 @@ auto set_mc_bound_2(
         }
     }
 
+    */
     return 0;
 }
 
-auto get_bound_device(int sockfd) -> std::string
+auto get_bound_device(int sock_fd) -> std::string
 {
     std::array<char, 10> dev_name;
     socklen_t dev_name_len = 0;
-    auto err = ::getsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, &dev_name[0], &dev_name_len);
+    auto err = ::getsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, &dev_name[0], &dev_name_len);
     std::string dev_name_str(std::begin(dev_name), std::begin(dev_name) + dev_name_len);
     if (err < 0)
     {
@@ -161,7 +188,7 @@ auto get_bound_device(int sockfd) -> std::string
     return dev_name_str;
 }
 
-auto get_ifname(int if_index, std::string& if_name) -> int
+auto get_ifname(unsigned int if_index, std::string& if_name) -> int
 {
     struct if_nameindex *if_ni = nullptr, *i = nullptr;
 
@@ -189,7 +216,7 @@ auto get_ifname(int if_index, std::string& if_name) -> int
     return 0;
 }
 
-auto get_ifindex(std::string const& if_name, int* const if_index) -> unsigned int
+auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> unsigned int
 {
 #if 0
     ifaddrs *if_arr=nullptr, *if_int=nullptr;
@@ -221,7 +248,7 @@ auto get_ifindex(std::string const& if_name, int* const if_index) -> unsigned in
     {
         perror("if_nameindex");
         exit(EXIT_FAILURE);
-        return -1;
+        return 0;
     }
 
     for (i = if_ni; !(i->if_index == 0 && nullptr == i->if_name); i++)

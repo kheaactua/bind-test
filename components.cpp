@@ -13,4 +13,5 @@ auto component_to_str(Component c) -> std::string
         case Component::client:
             return "client";
     }
+    return "unknown";
 }

@@ -1,5 +1,7 @@
 #include "components.hpp"
 
+#include <arpa/inet.h>
+
 #include <chrono>
 #include <condition_variable>
 #include <sstream>
@@ -20,16 +22,16 @@ auto multicast_server(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port,
+    short unsigned int port,
     bool& server_started,
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> void
 {
-    struct sockaddr_in serv_addr
-    {
-        0
-    }, client_addr{0};
+    struct sockaddr_in serv_addr, client_addr;
     int sock_fd = 0;
+
+    std::memset(&serv_addr, 0, sizeof(serv_addr));
+    std::memset(&client_addr, 0, sizeof(client_addr));
 
     {
         sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -50,9 +52,15 @@ auto multicast_server(
     }
 
     {
+#ifdef __QNX__
+        ifreq req;
+        // address2in_addr(mc_addr, req.ifru_broadaddr.s_addr);
+        std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
+#else
         ip_mreqn req;
         address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
-        req.imr_ifindex = 0;
+        req.imr_ifindex = 0; // ANY interface!
+#endif
 
         // clang-format off
         auto const err = setsockopt(
@@ -98,10 +106,17 @@ auto multicast_server(
     }
 
     {
+#ifdef __QNX__
+        ifreq req;
+        // address2in_addr(if_addr, req.imr_address.s_addr);
+        // address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
+        std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
+#else
         ip_mreqn req;
         address2in_addr(if_addr, req.imr_address.s_addr);
         address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
         get_ifindex(if_name, &req.imr_ifindex);
+#endif
         auto const mreq_str = ip_mreqn2str(req);
 
         // clang-format off
@@ -145,8 +160,11 @@ auto multicast_server(
 
     {
         client_addr.sin_family = AF_INET;
+#ifdef __QNX__
+#else
         address2in_addr(mc_addr, client_addr.sin_addr.s_addr);
-        client_addr.sin_port = ::htons(port);
+#endif
+        client_addr.sin_port = htons(port);
 
         std::string hello;
         for (int i = 0; i < 5; i++)
@@ -157,7 +175,11 @@ auto multicast_server(
                 sock_fd,
                 hello.c_str(),
                 hello.size(),
+#ifdef __QNX__
+                MSG_NOSIGNAL,
+#else
                 MSG_CONFIRM,
+#endif
                 reinterpret_cast<const struct sockaddr *>(&client_addr),
                 sizeof(client_addr)
             );

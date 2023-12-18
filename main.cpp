@@ -29,7 +29,7 @@ auto main() -> int
     auto const if_addr = boost::asio::ip::make_address(INTERFACE_IP);
     std::string if_name{INTERFACE_NAME};
     auto const mc_addr        = boost::asio::ip::make_address(MULTICAST_ADDR);
-    static int constexpr port = 30512;
+    static short unsigned int constexpr port = 30512;
 
     auto server_started = false;
     std::mutex server_started_mutex;

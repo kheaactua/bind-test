@@ -25,7 +25,7 @@ auto multicast_server(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port,
+    short unsigned int,
     bool& server_started,
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> void;
@@ -34,7 +34,7 @@ auto unicast_server(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port,
+    short unsigned int,
     bool& server_started,
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> void;
@@ -43,7 +43,7 @@ auto client_unicast(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port,
+    short unsigned int,
     bool const& server_started,
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> int;
@@ -52,7 +52,7 @@ auto client_multicast(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    int port,
+    short unsigned int,
     bool const& server_started,
     std::mutex& server_started_mutex,
     std::condition_variable& server_started_cv) -> int;
