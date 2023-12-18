@@ -1,11 +1,11 @@
-filesets {
+filegroup {
     name: "bind-test.files",
     srcs: [
-        "binding_function.cpp",
+        "binding_functions.cpp",
         "components.cpp",
         "logging.cpp",
         "server_multicast.cpp",
-        "client_multicast",
+        "client_multicast.cpp",
         "main.cpp",
     ],
 }
@@ -14,7 +14,7 @@ cc_defaults {
     name: "bind-test.defaults",
     stem: "bind-test",
     srcs: [":bind-test.files"],
-    cpp_std: "c++17"
+    cpp_std: "c++17",
 
     cflags: [
         "-DINTERFACE_IP=\"10.7.0.10\"",
