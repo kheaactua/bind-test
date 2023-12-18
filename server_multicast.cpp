@@ -194,7 +194,7 @@ auto multicast_server(
                 hello.c_str(),
                 hello.size(),
 #ifdef __QNX__
-                MSG_NOSIGNAL,
+                0,
 #else
                 MSG_CONFIRM,
 #endif
