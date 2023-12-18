@@ -23,7 +23,7 @@ cc_defaults {
         "-DINTERFACE_IP=\"10.7.0.10\"",
         "-DINTERFACE_NAME=\"oem1\"",
         "-DMULTICAST_ADDR=\"224.2.127.254\"",
-        "-DPORT=\"30513\"",
+        "-DPORT=30513",
         "-fexceptions",
     ],
     target: {
