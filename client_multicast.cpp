@@ -156,6 +156,15 @@ auto multicast_client(
         );
         // clang-format on
         exit_on_error(err, Component::client, "Add membership error");
+
+        std::stringstream ss;
+        ss << "Added to multicast group " << ::inet_ntoa(req.imr_multiaddr) << " on";
+#ifdef __QNX__
+        ss << " interface with IP " << ::inet_ntoa(req.imr_interface);
+#else
+        ss << " interface " << get_ifname(req);
+#endif
+        info(Component::client, ss.str());
     }
 
     // {
