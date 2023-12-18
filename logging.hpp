@@ -33,7 +33,7 @@ template <typename T> auto exit_on_error(T error, Component c, std::string&& msg
         ss << ": " << ANSI_RED << msg << ANSI_CLEAR;
         print_msg(ss.str());
 #ifdef __ANDROID__
-        ALOGE("%s: %s", component_to_str(c, false), msg.c_str());
+        ALOGE("%s: %s", component_to_str(c, false).c_str(), msg.c_str());
 #endif
         exit(1);
     }

@@ -25,6 +25,6 @@ auto info(Component c, std::string&& msg) -> void
 
     print_msg(ss.str());
 #ifdef __ANDROID__
-    ALOGI("%s: %s", component_to_str(c, false), msg.c_str());
+    ALOGI("%s: %s", component_to_str(c, false).c_str(), msg.c_str());
 #endif
 }
