@@ -55,7 +55,7 @@ auto main() -> int
     auto const mc_addr = boost::asio::ip::make_address(MULTICAST_ADDR);
     int const port     = 30511;
 
-    std::cout << "Input: "
+    std::cout << "[INFO] Input: "
               << "if=" << if_name << ", "
               << "ipv4=" << if_addr << ", "
               << "maddr=" << mc_addr << "\n";
@@ -99,8 +99,15 @@ auto main() -> int
         address2in_addr(if_addr, addr.sin_addr.s_addr);
         addr.sin_port = ::htons(port);
 
-        // bind
-        auto const err = ::bind(server_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr));
+        std::cout << "[INFO] Binding to " << ::inet_ntoa(addr.sin_addr) << ":" << ::ntohs(addr.sin_port) << "\n";
+
+        // clang-format off
+        auto const err = ::bind(
+            server_fd,
+            reinterpret_cast<struct sockaddr*>(&addr),
+            sizeof(addr)
+        );
+        // clang-format on
         exit_on_error(err, "bind error");
     }
 
