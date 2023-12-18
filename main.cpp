@@ -90,17 +90,16 @@ auto main() -> int
         }
     }
 
-    // set up addresses
+    // bind socket
     {
+        // set up addresses
         std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         // [-]    addr.sin_addr.s_addr = htonl(INADDR_ANY);
         address2in_addr(if_addr, addr.sin_addr.s_addr);
         addr.sin_port = ::htons(port);
-    }
 
-    // bind socket
-    {
+        // bind
         auto const err = ::bind(server_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr));
         exit_on_error(err, "bind error");
     }
