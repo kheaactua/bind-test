@@ -1,0 +1,9 @@
+compile_commands.json
+build/
+boost/
+.cache/
+
+# These shouldn't be here anyways
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/
