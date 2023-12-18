@@ -107,14 +107,14 @@ auto main() -> int
 
     // Listen
     {
-        auto const err = listen(server_fd, 3);
+        auto const err = ::listen(server_fd, 3);
         exit_on_error(err, "listen error");
     }
 
     // Accept
     {
         // clang-format off
-        new_socket = accept(
+        new_socket = ::accept(
             server_fd,
             reinterpret_cast<struct sockaddr*>(&addr),
             reinterpret_cast<socklen_t*>(&addrlen)
