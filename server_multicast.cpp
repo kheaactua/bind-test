@@ -97,33 +97,33 @@ auto multicast_server(
     //     info(Component::server, ss.str());
     // }
 
-    {
-        ip_mreqn req;
-        address2in_addr(if_addr, req.imr_address.s_addr);
-        address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
-        get_ifindex(if_name, &req.imr_ifindex);
-        auto const mreq_str = ip_mreqn2str(req);
+    // {
+    //     ip_mreqn req;
+    //     address2in_addr(if_addr, req.imr_address.s_addr);
+    //     address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
+    //     get_ifindex(if_name, &req.imr_ifindex);
+    //     auto const mreq_str = ip_mreqn2str(req);
 
-        // clang-format off
-        auto const err = ::setsockopt(
-            sock_fd,
-            IPPROTO_IP,
-            IP_MULTICAST_IF,
-            &req,
-            sizeof(req)
-        );
-        // clang-format on
-        auto const errno_b = errno;
+    //     // clang-format off
+    //     auto const err = ::setsockopt(
+    //         sock_fd,
+    //         IPPROTO_IP,
+    //         IP_MULTICAST_IF,
+    //         &req,
+    //         sizeof(req)
+    //     );
+    //     // clang-format on
+    //     auto const errno_b = errno;
 
-        std::stringstream ss;
-        ss << "Could not specify " << mreq_str
-           << " as the associated address.  Error: " << strerror(errno_b);
-        exit_on_error(err, Component::server, ss.str());
-        ss.str("");
+    //     std::stringstream ss;
+    //     ss << "Could not specify " << mreq_str
+    //        << " as the associated address.  Error: " << strerror(errno_b);
+    //     exit_on_error(err, Component::server, ss.str());
+    //     ss.str("");
 
-        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << mreq_str;
-        info(Component::server, ss.str());
-    }
+    //     ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << mreq_str;
+    //     info(Component::server, ss.str());
+    // }
 
     // bind socket
     {
