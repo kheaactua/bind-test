@@ -49,3 +49,5 @@ target_link_libraries(bind-test
     $<$<PLATFORM_ID:QNX>:socket>
 )
 target_compile_features(bind-test PRIVATE cxx_std_17)
+
+install(TARGETS bind-test)
