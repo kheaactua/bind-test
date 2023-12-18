@@ -12,14 +12,16 @@
 // Playing with code from:
 // http://www.cs.tau.ac.il/~eddiea/samples/Multicast/multicast-listen.c.html
 
-auto client_multicast(
+auto multicast_client(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
     short unsigned int port,
-    bool const& server_started,
-    std::mutex& server_started_mutex,
-    std::condition_variable& server_started_cv) -> int
+    std::mutex& component_ready,
+    bool const& server_ready,
+    std::condition_variable& server_ready_cv,
+    bool& client_ready,
+    std::condition_variable& client_ready_cv) -> void
 {
     // http://www.cs.tau.ac.il/~eddiea/samples/Multicast/multicast-listen.c.html
     int sock_fd = 0;
@@ -35,8 +37,8 @@ auto client_multicast(
     }
 
     {
-        std::unique_lock<std::mutex> lk(server_started_mutex);
-        server_started_cv.wait(lk, [&server_started] { return server_started; });
+        std::unique_lock<std::mutex> lk(component_ready);
+        server_ready_cv.wait(lk, [&server_ready] { return server_ready; });
         info(Component::client, "Server started");
     }
 
@@ -181,6 +183,12 @@ auto client_multicast(
     //     std::this_thread::sleep_for(500ms);
     // }
 
+    {
+        client_ready = true;
+        client_ready_cv.notify_all();
+        info(Component::client, "Notifying server that client ready");
+    }
+
     auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
         std::array<char, 1024> buffer = {0};
@@ -203,6 +211,4 @@ auto client_multicast(
 
     info(Component::client, "Closing");
     close(sock_fd);
-
-    return 0;
 }

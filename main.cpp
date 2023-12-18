@@ -47,9 +47,13 @@ auto main() -> int
     auto const mc_addr        = boost::asio::ip::make_address(MULTICAST_ADDR);
     static short unsigned int constexpr port = PORT;
 
-    auto server_started = false;
-    std::mutex server_started_mutex;
-    std::condition_variable server_started_cv;
+    std::mutex component_ready;
+
+    auto server_ready = false;
+    std::condition_variable server_ready_cv;
+
+    auto client_ready = false;
+    std::condition_variable client_ready_cv;
 
     std::stringstream ss;
     ss << "Input: "
@@ -64,19 +68,24 @@ auto main() -> int
         if_name,
         mc_addr,
         port,
-        std::ref(server_started),
-        std::ref(server_started_mutex),
-        std::ref(server_started_cv));
+        std::ref(component_ready),
+        std::ref(server_ready),
+        std::ref(server_ready_cv),
+        std::ref(client_ready),
+        std::ref(client_ready_cv)
+    );
 
     auto client_thread = std::thread(
-        &client_multicast,
+        &multicast_client,
         if_addr,
         if_name,
         mc_addr,
         port,
-        std::ref(server_started),
-        std::ref(server_started_mutex),
-        std::ref(server_started_cv));
+        std::ref(component_ready),
+        std::cref(server_ready),
+        std::ref(server_ready_cv),
+        std::ref(client_ready),
+        std::ref(client_ready_cv));
 
     service_thread.join();
     client_thread.join();

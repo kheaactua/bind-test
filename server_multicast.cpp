@@ -24,9 +24,11 @@ auto multicast_server(
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
     short unsigned int port,
-    bool& server_started,
-    std::mutex& /* server_started_mutex */,
-    std::condition_variable& server_started_cv) -> void
+    std::mutex& component_ready,
+    bool& server_ready,
+    std::condition_variable& server_ready_cv,
+    bool const& client_ready,
+    std::condition_variable& client_ready_cv) -> void
 {
     struct sockaddr_in serv_addr, client_addr;
     int sock_fd = 0;
@@ -178,9 +180,15 @@ auto multicast_server(
     }
 
     {
-        server_started = true;
-        server_started_cv.notify_all();
+        server_ready = true;
+        server_ready_cv.notify_all();
         info(Component::server, "Notifying that service is bound");
+    }
+
+    {
+        std::unique_lock<std::mutex> lk(component_ready);
+        client_ready_cv.wait(lk, [&client_ready] { return client_ready; });
+        info(Component::server, "Client ready");
     }
 
     {

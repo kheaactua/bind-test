@@ -25,36 +25,42 @@ auto multicast_server(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    short unsigned int,
-    bool& server_started,
-    std::mutex& server_started_mutex,
-    std::condition_variable& server_started_cv) -> void;
+    short unsigned int port,
+    std::mutex& component_ready,
+    bool& server_ready,
+    std::condition_variable& server_ready_cv,
+    bool const& client_ready,
+    std::condition_variable& client_ready_cv) -> void;
 
-auto unicast_server(
+// auto unicast_server(
+//     boost::asio::ip::address const& if_addr,
+//     std::string const& if_name,
+//     boost::asio::ip::address const& mc_addr,
+//     short unsigned int,
+//     bool& server_ready,
+//     std::mutex& component_ready,
+//     std::condition_variable& server_ready_cv) -> void;
+
+// auto client_unicast(
+//     boost::asio::ip::address const& if_addr,
+//     std::string const& if_name,
+//     boost::asio::ip::address const& mc_addr,
+//     short unsigned int,
+//     std::mutex& component_ready,
+//     bool const& server_ready,
+//     std::condition_variable& server_ready_cv,
+//     bool const& client_ready,
+//     std::condition_variable& client_ready_cv) -> int;
+
+auto multicast_client(
     boost::asio::ip::address const& if_addr,
     std::string const& if_name,
     boost::asio::ip::address const& mc_addr,
-    short unsigned int,
-    bool& server_started,
-    std::mutex& server_started_mutex,
-    std::condition_variable& server_started_cv) -> void;
-
-auto client_unicast(
-    boost::asio::ip::address const& if_addr,
-    std::string const& if_name,
-    boost::asio::ip::address const& mc_addr,
-    short unsigned int,
-    bool const& server_started,
-    std::mutex& server_started_mutex,
-    std::condition_variable& server_started_cv) -> int;
-
-auto client_multicast(
-    boost::asio::ip::address const& if_addr,
-    std::string const& if_name,
-    boost::asio::ip::address const& mc_addr,
-    short unsigned int,
-    bool const& server_started,
-    std::mutex& server_started_mutex,
-    std::condition_variable& server_started_cv) -> int;
+    short unsigned int port,
+    std::mutex& component_ready,
+    bool const& server_ready,
+    std::condition_variable& server_ready_cv,
+    bool& client_ready,
+    std::condition_variable& client_ready_cv) -> void;
 
 #endif /* end of include guard: COMPONENTS_HPP_S0EML3DC */
