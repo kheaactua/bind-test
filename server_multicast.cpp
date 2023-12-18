@@ -28,18 +28,18 @@ auto multicast_server(
     {
         0
     }, client_addr{0};
-    int server_fd = 0;
+    int sock_fd = 0;
 
     {
-        server_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
-        exit_on_error(server_fd, Component::server, "socket");
+        sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+        exit_on_error(sock_fd, Component::server, "socket");
     }
 
     {
         int const opt = 1; // Not sure what this is
         // clang-format off
         auto const err = ::setsockopt(
-            server_fd, SOL_SOCKET,
+            sock_fd, SOL_SOCKET,
             SO_REUSEADDR | SO_REUSEPORT,
             &opt,
             sizeof(opt)
@@ -55,7 +55,7 @@ auto multicast_server(
 
         // clang-format off
         auto const err = setsockopt(
-            server_fd,
+            sock_fd,
             IPPROTO_IP,
             IP_ADD_MEMBERSHIP,
             &req,
@@ -67,7 +67,7 @@ auto multicast_server(
 
     // Right now, doing this blocks the client from receiving anything!
     // {
-    //     auto const err = set_mc_bound_2(server_fd, mc_addr, if_addr, if_name);
+    //     auto const err = set_mc_bound_2(sock_fd, mc_addr, if_addr, if_name);
     //     std::stringstream ss;
     //     ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
     //        << ":" << strerror(errno);
@@ -80,7 +80,7 @@ auto multicast_server(
 
         // clang-format off
         auto const err = setsockopt(
-            server_fd,
+            sock_fd,
             SOL_SOCKET,
             SO_BINDTODEVICE,
             if_name.c_str(),
@@ -100,7 +100,7 @@ auto multicast_server(
     {
         // clang-format off
         auto const err = ::bind(
-            server_fd,
+            sock_fd,
             reinterpret_cast<struct sockaddr*>(&serv_addr),
             sizeof(serv_addr)
         );
@@ -125,7 +125,7 @@ auto multicast_server(
             hello = "hello from server (" + std::to_string(i) + ")";
             // clang-format off
             auto const err = ::sendto(
-                server_fd,
+                sock_fd,
                 hello.c_str(),
                 hello.size(),
                 MSG_CONFIRM,
@@ -143,12 +143,12 @@ auto multicast_server(
     // mreq.imr_multiaddr.s_addr = mc_addr.to_v4().to_uint();
     // [-]    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     // mreq.imr_interface.s_addr = inet_addr(if_addr);
-    // if (setsockopt(server_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+    // if (setsockopt(sock_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
     // {
     //     perror("setsockopt");
     //     exit(1);
     // }
 
     info(Component::server, "Closing");
-    close(server_fd);
+    close(sock_fd);
 }
