@@ -116,7 +116,7 @@ auto multicast_client(
         IP_REQ req;
         address2in_addr(mc_addr, req.imr_multiaddr);
 #ifdef __QNX__
-        address2in_addr(if_addr, req.imr_interface);
+        address2in_addr(if_addr, req.imr_interface); // required
 #else
         req.imr_ifindex = get_ifindex(if_name);
 #endif
