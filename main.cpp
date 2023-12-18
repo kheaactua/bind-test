@@ -114,7 +114,7 @@ auto main() -> int
 
     // Listen
     {
-        auto const err = ::listen(server_fd, 3);
+        auto const err = ::listen(server_fd, /* backlog */ 3);
         exit_on_error(err, "listen error");
     }
 
