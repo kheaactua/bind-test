@@ -122,13 +122,12 @@ auto client_multicast(
 
     {
         // Preparatios for using Multicast
-
+        IP_REQ req;
+        address2in_addr(mc_addr, req.imr_multiaddr);
 #ifdef __QNX__
-        ifreq req;
+        address2in_addr(if_addr, req.imr_interface);
 #else
-        ip_mreqn req;
-        req.imr_multiaddr = mcast_group.sin_addr;
-        req.imr_ifindex   = 0;
+        get_ifindex(if_name, &req.imr_ifindex);
 #endif
 
         // clang-format off

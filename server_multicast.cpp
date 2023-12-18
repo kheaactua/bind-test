@@ -53,15 +53,14 @@ auto multicast_server(
     }
 
     {
+        IP_REQ req;
+        address2in_addr(mc_addr, req.imr_multiaddr);
 #ifdef __QNX__
         // http://www.qnx.com/developers/docs/7.1/index.html#com.qnx.doc.neutrino.lib_ref/topic/i/ip_proto.html
-        ip_mreq req;
-        address2in_addr(mc_addr, req.imr_multiaddr);
         address2in_addr(if_addr, req.imr_interface);
 #else
-        ip_mreqn req;
-        address2in_addr(mc_addr, req.imr_multiaddr);
-        req.imr_ifindex = 0; // ANY interface!
+        // req.imr_ifindex = 0; // ANY interface!
+        get_ifindex(if_name, &req.imr_ifindex);
 #endif
 
         // clang-format off

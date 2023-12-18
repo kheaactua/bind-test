@@ -27,5 +27,6 @@ auto set_mc_bound_2(
 auto get_bound_device(int sockfd) -> std::string;
 
 auto get_ifname(unsigned int if_index, std::string& if_name) -> int;
+auto get_ifindex(std::string const& if_name, int* const if_index) -> void;
 
 #endif /* end of include guard: BINDING_FUNCTIONS_HPP_PDKYFOSL */

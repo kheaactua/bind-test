@@ -233,31 +233,8 @@ auto get_ifname(unsigned int if_index, std::string& if_name) -> int
     return 0;
 }
 
-auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> void
+auto get_ifindex(std::string const& if_name, int* const if_index) -> void
 {
-#if 0
-    ifaddrs *if_arr=nullptr, *if_int=nullptr;
-    auto const err = ::getifaddrs(&if_arr);
-    if (err != 0)
-    {
-        return err;
-    }
-
-    unsigned int index=0;
-    for(if_int = if_arr; if_int != nullptr; if_int = if_int->ifa_next)
-    {
-        std::cout << "get_ifindex(search=" << if_name << "): idx=" << i->if_index << " name=" << i->if_name;
-        if (0 == std::strncmp(if_int->ifa_name, if_name.c_str(), if_name.size()))
-        {
-            *if_index = index;
-            break;
-        }
-        index++;
-    }
-    freeifaddrs(if_arr);
-    if_arr = nullptr;
-    if_int = nullptr;
-#else
     struct if_nameindex *if_ni = nullptr, *i = nullptr;
 
     if_ni = ::if_nameindex();
@@ -279,6 +256,4 @@ auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> vo
     }
 
     if_freenameindex(if_ni);
-#endif
 }
-
