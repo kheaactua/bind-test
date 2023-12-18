@@ -204,6 +204,32 @@ auto get_ifname(unsigned int if_index, std::string& if_name) -> int
     return 0;
 }
 
+auto get_ifname(IP_REQ const req) -> std::string
+{
+#ifdef __QNX__
+        if (INADDR_ANY == req.imr_interface.s_addr)
+        {
+            return "any";
+        }
+        else
+        {
+            return "<unsupported>";
+        }
+#else
+        if (0 == req.imr_ifindex)
+        {
+            return "any";
+        }
+        else
+        {
+            std::string name;
+            get_ifname(req.imr_ifindex, name);
+            return name;
+        }
+#endif
+
+}
+
 #ifndef __QNX__
 auto get_ifindex(std::string const& if_name) -> decltype(IP_REQ::imr_ifindex)
 {

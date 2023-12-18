@@ -11,6 +11,10 @@
       "hidden": true,
       "displayName": "Default Config",
       "cacheVariables": {
+        "PORT": {
+          "type": "STRING",
+          "value": "30513"
+        },
         "MULTICAST_ADDR": {
           "type": "STRING",
           "value": "224.2.127.254"
@@ -43,6 +47,23 @@
         "type": "notEquals",
         "lhs": "$env{QNX_HOST}",
         "rhs": ""
+      }
+    },
+    {
+      "name": "emac0",
+      "inherits": "pdc",
+      "displayName": "emac0 interface on PDC (corresponds to AOSP-system)",
+      "description": "emac0 interface on PDC",
+      "binaryDir": "${sourceDir}/build/emac0",
+      "cacheVariables": {
+        "INTERFACE_IP": {
+          "type": "STRING",
+          "value": "10.1.0.3"
+        },
+        "INTERFACE_NAME": {
+          "type": "STRING",
+          "value": "emac0"
+        }
       }
     },
     {
@@ -89,6 +110,11 @@
         "lhs": "$env{QNX_HOST}",
         "rhs": ""
       }
+    },
+    {
+      "name": "emac0",
+      "inherits": "pdc",
+      "configurePreset": "emac0"
     },
     {
       "name": "vp1",

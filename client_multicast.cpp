@@ -60,7 +60,20 @@ auto client_multicast(
     }
 
     {
+        std::stringstream ss;
         // clang-format off
+#ifdef __QNX__
+        ifreq req;
+        std::strcpy(req.ifr_name, if_name.c_str());
+        auto const err = setsockopt(
+            sock_fd,
+            SOL_SOCKET,
+            SO_BINDTODEVICE,
+            &req,
+            static_cast<socklen_t>(sizeof(req))
+        );
+        ss << "Could not bind multicast to \"" << req.ifr_name;
+#else
         auto const err = setsockopt(
             sock_fd,
             SOL_SOCKET,
@@ -68,15 +81,15 @@ auto client_multicast(
             if_name.c_str(),
             static_cast<socklen_t>(if_name.size())
         );
+        ss << "Could not bind multicast to \"" << if_name;
+#endif
         // clang-format on
-        std::stringstream ss;
-        ss << "Could not bind multicast to \"" << if_name << "\": errno=" << std::to_string(errno)
-           << ":" << strerror(errno);
+        ss << "\": errno=" << std::to_string(errno) << ":" << strerror(errno);
         exit_on_error(err, Component::client, ss.str());
         ss.str("");
 
         ss << "Bound to interface \"" << if_name << "\"";
-        info(Component::server, ss.str());
+        info(Component::client, ss.str());
     }
 
     {

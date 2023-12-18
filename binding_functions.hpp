@@ -24,6 +24,7 @@ auto set_mc_bound_2(
 auto get_bound_device(int sockfd) -> std::string;
 
 auto get_ifname(unsigned int if_index, std::string& if_name) -> int;
+auto get_ifname(IP_REQ req) -> std::string;
 #ifndef __QNX__
 auto get_ifindex(std::string const& if_name) -> decltype(IP_REQ::imr_ifindex);
 #endif

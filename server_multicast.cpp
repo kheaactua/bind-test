@@ -64,6 +64,7 @@ auto multicast_server(
 #ifdef __QNX__
         address2in_addr(if_addr, req.imr_interface);
 #else
+        // TODO arguably this shouldn't be set here
         // req.imr_ifindex = 0; // ANY interface!
         req.imr_ifindex = get_ifindex(if_name);
 #endif
@@ -78,16 +79,16 @@ auto multicast_server(
         );
         // clang-format on
         exit_on_error(err, Component::server, "Add membership error");
-    }
 
-    // Right now, doing this blocks the client from receiving anything!
-    // {
-    //     auto const err = set_mc_bound_2(sock_fd, mc_addr, if_addr, if_name);
-    //     std::stringstream ss;
-    //     ss << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno)
-    //        << ":" << strerror(errno);
-    //     exit_on_error(err, Component::server, ss.str());
-    // }
+        std::stringstream ss;
+        ss << "Added to multicast group " << ::inet_ntoa(req.imr_multiaddr) << " on";
+#ifdef __QNX__
+        ss << " interface with IP " << ::inet_ntoa(req.imr_interface);
+#else
+        ss << " interface " << get_ifname(req);
+#endif
+        info(Component::server, ss.str());
+    }
 
     {
         // Bind to device.  Right now the effect is that the client won't

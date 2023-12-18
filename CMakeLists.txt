@@ -4,6 +4,7 @@ project(bind-test)
 set(INTERFACE_IP "10.1.0.100" CACHE STRING "Address of interface to bind to")
 set(INTERFACE_NAME "enx0050b6eb5220" CACHE STRING "Name of interface to bind to")
 set(MULTICAST_ADDR "224.2.127.254" CACHE STRING "Multicast IP to use")
+set(PORT "30512" CACHE STRING "Port to send and receive from")
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Threads)
@@ -37,6 +38,7 @@ target_compile_definitions(bind-test
     -DINTERFACE_IP=\"${INTERFACE_IP}\"
     -DINTERFACE_NAME=\"${INTERFACE_NAME}\"
     -DMULTICAST_ADDR=\"${MULTICAST_ADDR}\"
+    -DPORT=${PORT}
 )
 target_compile_options(bind-test
   PRIVATE

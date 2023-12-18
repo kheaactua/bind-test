@@ -23,6 +23,10 @@
 #error "Please define MULTICAST_ADDR"
 #endif
 
+#ifndef PORT
+#error "Please define a PORT"
+#endif
+
 #ifdef BOOST_NO_EXCEPTIONS
 namespace boost
 {
@@ -41,7 +45,7 @@ auto main() -> int
     auto const if_addr = boost::asio::ip::make_address(INTERFACE_IP);
     std::string if_name{INTERFACE_NAME};
     auto const mc_addr        = boost::asio::ip::make_address(MULTICAST_ADDR);
-    static short unsigned int constexpr port = 30512;
+    static short unsigned int constexpr port = PORT;
 
     auto server_started = false;
     std::mutex server_started_mutex;
