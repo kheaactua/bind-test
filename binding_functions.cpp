@@ -36,34 +36,37 @@ auto address2in_addr(boost::asio::ip::address const& addr, in_addr& dest) -> voi
 // #endif
 }
 
-#ifdef __QNX__
-auto ip_mreqn2str(ifreq const& req) -> std::string
-{
-    std::stringstream rss;
-    // clang-format off
-    rss << "req{"
-       // << "multiaddr=\"" << ::inet_ntoa(req.ifru_broadaddr) << "\","
-       // << "daddr=\"" << ::inet_ntoa(req.ifru_dstaddr) << "\","
-       // << "addr=\"" << ::inet_ntoa(req.ifru_addr) << "\","
-       << "if=\"" << req.ifr_name << "\""
-       << "}";
-    // clang-format on
-    return rss.str();
-}
-#else
-auto ip_mreqn2str(ip_mreqn const& req) -> std::string
+// #ifdef __QNX__
+// auto ip_mreq2str(ifreq const& req) -> std::string
+// {
+//     std::stringstream rss;
+//     // clang-format off
+//     rss << "req{"
+//        // << "multiaddr=\"" << ::inet_ntoa(req.ifru_broadaddr) << "\","
+//        // << "daddr=\"" << ::inet_ntoa(req.ifru_dstaddr) << "\","
+//        // << "addr=\"" << ::inet_ntoa(req.ifru_addr) << "\","
+//        << "if=\"" << req.ifr_name << "\""
+//        << "}";
+//     // clang-format on
+//     return rss.str();
+// }
+// #endif
+auto ip_mreq2str(IP_REQ const& req) -> std::string
 {
     std::stringstream rss;
     // clang-format off
     rss << "req{"
        << "multiaddr=\"" << ::inet_ntoa(req.imr_multiaddr) << "\","
+#ifdef __QNX__
+       << "interface=\"" << ::inet_ntoa(req.imr_interface) << "\""
+#else
        << "addr=\"" << ::inet_ntoa(req.imr_address) << "\","
        << "index=\"" << req.imr_ifindex << "\""
+#endif
        << "}";
     // clang-format on
     return rss.str();
 }
-#endif
 
 auto set_mc_bound_2(
     int /* sock_fd */,
@@ -138,13 +141,13 @@ auto set_mc_bound_2(
         if (err == 0)
         {
             std::cout << __func__ << ": Successful call to setsockopt(IP_MULTICAST_IF) req="
-                      << ip_mreqn2str(req) << "\n";
+                      << ip_mreq2str(req) << "\n";
         }
         else
         {
             auto const errno_b = errno;
 
-            std::cout << __func__ << ": Could not specify " << ip_mreqn2str(req)
+            std::cout << __func__ << ": Could not specify " << ip_mreq2str(req)
                       << " as the associated address.  Error: ";
 
             switch (errno_b)
@@ -279,9 +282,3 @@ auto get_ifindex(std::string const& if_name, unsigned int* const if_index) -> vo
 #endif
 }
 
-auto get_ifindex(std::string const& if_name, int* const if_index) -> void
-{
-    unsigned int tmp_index = 0;
-    get_ifindex(if_name, &tmp_index);
-    *if_index = static_cast<decltype(tmp_index)>(tmp_index);
-};

@@ -9,6 +9,7 @@
 
 #include <boost/asio/ip/address.hpp>
 
+#include "types.hpp"
 #include "binding_functions.hpp"
 #include "logging.hpp"
 
@@ -39,7 +40,7 @@ auto multicast_server(
     }
 
     {
-        int const opt = 1; // Not sure what this is
+        int const opt = 1; // Positive value for re-use
         // clang-format off
         auto const err = ::setsockopt(
             sock_fd, SOL_SOCKET,
@@ -57,10 +58,9 @@ auto multicast_server(
         ip_mreq req;
         address2in_addr(mc_addr, req.imr_multiaddr);
         address2in_addr(if_addr, req.imr_interface);
-        // std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
 #else
         ip_mreqn req;
-        address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
+        address2in_addr(mc_addr, req.imr_multiaddr);
         req.imr_ifindex = 0; // ANY interface!
 #endif
 
@@ -109,38 +109,28 @@ auto multicast_server(
     }
 
     {
-#ifdef __QNX__
-        ifreq req;
-        // address2in_addr(if_addr, req.imr_address.s_addr);
-        // address2in_addr(mc_addr, req.ifu_b.ifru_broadaddr.s_addr);
-        // address2in_addr(mc_addr, req.ifr_broadaddr.s_addr);
-        std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
-#else
-        ip_mreqn req;
-        address2in_addr(if_addr, req.imr_address.s_addr);
-        address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
-        get_ifindex(if_name, &req.imr_ifindex);
-#endif
-        auto const mreq_str = ip_mreqn2str(req);
+        // IP_REQ req;
+        in_addr mc_if_addr;
+        address2in_addr(if_addr, mc_if_addr);
 
         // clang-format off
         auto const err = ::setsockopt(
             sock_fd,
             IPPROTO_IP,
             IP_MULTICAST_IF,
-            &req,
-            sizeof(req)
+            &mc_if_addr,
+            sizeof(mc_if_addr)
         );
         // clang-format on
         auto const errno_b = errno;
 
         std::stringstream ss;
-        ss << "Could not specify " << mreq_str
+        ss << "Could not specify " << ::inet_ntoa(mc_if_addr)
            << " as the associated address.  Error: " << strerror(errno_b);
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
 
-        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << mreq_str;
+        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
         info(Component::server, ss.str());
     }
 
@@ -164,10 +154,7 @@ auto multicast_server(
 
     {
         client_addr.sin_family = AF_INET;
-#ifdef __QNX__
-#else
-        address2in_addr(mc_addr, client_addr.sin_addr.s_addr);
-#endif
+        address2in_addr(mc_addr, client_addr.sin_addr);
         client_addr.sin_port = htons(port);
 
         std::string hello;

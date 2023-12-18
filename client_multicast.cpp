@@ -5,6 +5,7 @@
 
 #include <boost/asio/ip/address.hpp>
 
+#include "types.hpp"
 #include "binding_functions.hpp"
 #include "logging.hpp"
 
@@ -74,44 +75,32 @@ auto client_multicast(
     }
 
     {
-#ifdef __QNX__
-        ifreq req;
-        std::memcpy(&req.ifr_name, if_name.c_str(), if_name.length());
-#else
-        ip_mreqn req;
-        address2in_addr(if_addr, req.imr_address.s_addr);
-        address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
-        get_ifindex(if_name, &req.imr_ifindex);
-#endif
-        auto const mreq_str = ip_mreqn2str(req);
+        in_addr mc_if_addr;
+        address2in_addr(if_addr, mc_if_addr);
 
         // clang-format off
         auto const err = ::setsockopt(
             sock_fd,
             IPPROTO_IP,
             IP_MULTICAST_IF,
-            &req,
-            sizeof(req)
+            &mc_if_addr,
+            sizeof(mc_if_addr)
         );
         // clang-format on
 
         std::stringstream ss;
-        ss << "Could not specify " << mreq_str
+        ss << "Could not specify " << ::inet_ntoa(mc_if_addr)
            << " as the associated address.  Error: " << strerror(errno);
         exit_on_error(err, Component::server, ss.str());
         ss.str("");
 
-        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << mreq_str;
+        ss << "Successful call to setsockopt(IP_MULTICAST_IF) req=" << ::inet_ntoa(mc_if_addr);
         info(Component::client, ss.str());
     }
 
     {
         mcast_group.sin_family = AF_INET;
-#ifdef __QNX__
-        // TODO
-#else
-        address2in_addr(mc_addr, mcast_group.sin_addr.s_addr);
-#endif
+        address2in_addr(mc_addr, mcast_group.sin_addr);
         mcast_group.sin_port = htons(port);
 
         // setsockopt(sock_fd, SOL_SOCKET, SO_BINDTODEVICE, if_name.c_str(), if_name.size());
