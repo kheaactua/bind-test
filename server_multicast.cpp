@@ -30,11 +30,10 @@ auto multicast_server(
     bool const& client_ready,
     std::condition_variable& client_ready_cv) -> void
 {
-    struct sockaddr_in serv_addr, client_addr;
+    struct sockaddr_in serv_addr;
     int sock_fd = 0;
 
     std::memset(&serv_addr, 0, sizeof(serv_addr));
-    std::memset(&client_addr, 0, sizeof(client_addr));
 
     {
         sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -185,10 +184,6 @@ auto multicast_server(
     }
 
     {
-        client_addr.sin_family = AF_INET;
-        address2in_addr(mc_addr, client_addr.sin_addr);
-        client_addr.sin_port = htons(port);
-
         std::string hello;
         for (int i = 0; i < 5; i++)
         {
@@ -203,8 +198,8 @@ auto multicast_server(
 #else
                 MSG_CONFIRM,
 #endif
-                reinterpret_cast<const struct sockaddr *>(&client_addr),
-                sizeof(client_addr)
+                reinterpret_cast<const struct sockaddr *>(&serv_addr),
+                sizeof(serv_addr)
             );
             // clang-format on
             exit_on_error(err, Component::server, "Could not send hello message");
