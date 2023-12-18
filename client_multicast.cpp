@@ -1,5 +1,8 @@
 #include "components.hpp"
 
+#include <cstring>
+
+#include <array>
 #include <condition_variable>
 #include <sstream>
 #include <thread>
@@ -217,7 +220,7 @@ auto multicast_client(
         );
         // clang-format on
         auto const errno_b                                  = errno;
-        buffer[static_cast<decltype(buffer)::size_type>(n)] = '\0';
+        buffer[static_cast<typename decltype(buffer)::size_type>(n)] = '\0';
 
         if (n > 0)
         {
