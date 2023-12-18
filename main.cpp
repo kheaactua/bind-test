@@ -1,10 +1,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#include <iostream>
-#include <string_view>
-#include <sstream>
 #include <concepts>
+#include <iostream>
+#include <sstream>
+#include <string_view>
 
 #include <boost/asio/ip/address.hpp>
 
@@ -38,7 +38,8 @@ auto exit_on_error(T error, std::string&& msg) -> void
 {
     if (error < 0)
     {
-        std::cerr << "[" << ANSI_RED "Error" << ANSI_CLEAR << "] " << ANSI_RED << msg << ANSI_CLEAR << "\n";
+        std::cerr << "[" << ANSI_RED "Error" << ANSI_CLEAR << "] " << ANSI_RED << msg << ANSI_CLEAR
+                  << "\n";
         exit(1);
     }
 }
@@ -48,7 +49,6 @@ auto main() -> int
     struct sockaddr_in addr;
     int server_fd = 0, new_socket = 0;
     socklen_t addrlen = sizeof(addr);
-    struct ip_mreq mreq;
 
     auto const if_addr = boost::asio::ip::make_address(INTERFACE_IP);
     std::string if_name{INTERFACE_NAME};
@@ -92,8 +92,7 @@ auto main() -> int
 
     // set up addresses
     {
-        boost::system::error_code ec;
-        bzero(&addr, sizeof(addr));
+        std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         // [-]    addr.sin_addr.s_addr = htonl(INADDR_ANY);
         address2in_addr(if_addr, addr.sin_addr.s_addr);
@@ -126,6 +125,7 @@ auto main() -> int
     {
         std::array<char, 1024> buffer = {0};
         auto const valread = ::read(new_socket, buffer.data(), buffer.size());
+        exit_on_error(valread, "read error");
         std::cout << "Read: " << buffer.data() << "\n";
     }
 
