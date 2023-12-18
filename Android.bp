@@ -73,10 +73,12 @@ cc_defaults {
 
 cc_binary {
     name: "bind-test.system",
+    defaults: ["bind-test.defaults"],
     vendor: false,
 }
 
 cc_binary {
     name: "bind-test.vendor",
+    defaults: ["bind-test.defaults"],
     vendor: true,
 }
