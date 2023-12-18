@@ -115,7 +115,9 @@ auto main() -> int
     // Listen
     {
         auto const err = ::listen(server_fd, /* backlog */ 3);
-        exit_on_error(err, "listen error");
+        std::stringstream ss;
+        ss << "Failed to listen on server fd = " << server_fd;
+        exit_on_error(err, ss.str());
     }
 
     // Accept
@@ -134,13 +136,13 @@ auto main() -> int
         std::array<char, 1024> buffer = {0};
         auto const valread            = ::read(new_socket, buffer.data(), buffer.size());
         exit_on_error(valread, "read error");
-        std::cout << "Read: " << buffer.data() << "\n";
+        std::cout << "[Info] Read: " << buffer.data() << "\n";
     }
 
     {
         std::string hello{"hello"};
         ::send(new_socket, hello.c_str(), hello.size(), 0);
-        std::cout << "Hello message sent\n";
+        std::cout << "[Info] Hello message sent\n";
     }
 
     // use setsockopt() to request that the kernel join a multicast group
