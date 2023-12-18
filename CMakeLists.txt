@@ -44,6 +44,7 @@ set(INTERFACE_NAME "enx0050b6eb5220" CACHE STRING "Name of interface to bind to"
 set(MULTICAST_ADDR "224.2.127.254" CACHE STRING "Multicast IP to use")
 
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Threads)
 
 add_executable(bind-test)
 target_sources(bind-test
@@ -69,5 +70,6 @@ target_compile_options(bind-test
 target_link_libraries(bind-test
   PRIVATE
     Boost::system
+    Threads::Threads
 )
 target_compile_features(bind-test PRIVATE cxx_std_20)
