@@ -1,18 +1,23 @@
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <iostream>
 #include <string_view>
 
-#ifndef INTERFACE_IP
-#define INTERFACE_IP "192.168.2.53"
-#endif
+#include <boost/asio/ip/address.hpp>
 
-#ifndef MULTICAST_ADDR
-#define MULTICAST_ADDR "224.2.127.254"
+#include "binding_functions.hpp"
+
+#ifndef INTERFACE_IP
+#error "Please define INTERFACE_IP"
 #endif
 
 #ifndef INTERFACE_NAME
-#define INTERFACE_NAME "eno1"
+#error "Please define INTERFACE_NAME"
+#endif
+
+#ifndef MULTICAST_ADDR
+#define "Please define MULTICAST_ADDR"
 #endif
 
 // Playing with code from:
@@ -25,18 +30,17 @@ auto main() -> int
     socklen_t addrlen;
     struct ip_mreq mreq;
 
-    static constexpr std::string_view if_addr = INTERFACE_IP;
-    static constexpr std::string_view if_name = INTERFACE_NAME;
-    static constexpr std::string_view mc_addr = MULTICAST_ADDR;
+    auto const if_addr = boost::asio::ip::address::from_string(INTERFACE_IP);
+    std::string if_name{INTERFACE_NAME};
+    auto const mc_addr = boost::asio::ip::address::from_string(MULTICAST_ADDR);
+    int const port = 30511;
 
     std::cout << "Input: "
         << "if=" << if_name << ", "
         << "ipv4=" << if_addr << ", "
         << "maddr=" << mc_addr << "\n";
 
-    // if_addr equals current IP as String, e.g. "89.89.89.89"
-
-    // create what looks like an ordinary UDP socket */
+    // create what looks like an ordinary UDP socket
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
         perror("socket");
@@ -47,23 +51,36 @@ auto main() -> int
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
     // [-]    addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_addr.s_addr = inet_addr(if_addr);
+    addr.sin_addr.s_addr = inet_addr(if_addr.to_string().c_str());
     addr.sin_port        = htons(port);
 
     // bind socket
-    if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+    if (::bind(fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0)
     {
         perror("bind");
         exit(1);
     }
 
-    // use setsockopt() to request that the kernel join a multicast group
-    mreq.imr_multiaddr.s_addr = inet_addr(group);
-    // [-]    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    mreq.imr_interface.s_addr = inet_addr(if_addr);
-    if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
     {
-        perror("setsockopt");
-        exit(1);
+        auto const err = set_mc_bound_2(
+            fd,
+            mc_addr,
+            if_addr,
+            if_name
+        );
+        if (err != 0)
+        {
+            std::cout << "Could not bind mc socket to " << if_name << ", errno=" << std::to_string(errno) << ":" << strerror(errno) << "";
+        }
     }
+
+    // use setsockopt() to request that the kernel join a multicast group
+    // mreq.imr_multiaddr.s_addr = mc_addr.to_v4().to_uint();
+    // [-]    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    // mreq.imr_interface.s_addr = inet_addr(if_addr);
+    // if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0)
+    // {
+    //     perror("setsockopt");
+    //     exit(1);
+    // }
 }

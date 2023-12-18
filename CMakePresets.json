@@ -13,6 +13,10 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/default",
       "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
         "MULTICAST_ADDR": {
           "type": "STRING",
           "value": "224.2.127.254"
