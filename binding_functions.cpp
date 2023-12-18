@@ -190,8 +190,8 @@ auto get_ifname(unsigned int if_index, std::string& if_name) -> int
 
     for (i = if_ni; !(i->if_index == 0 && nullptr == i->if_name); i++)
     {
-        std::cout << "get_ifname(search=" << if_index << "): idx=" << i->if_index
-                  << " name=" << i->if_name << "\n";
+        // std::cout << "get_ifname(search=" << if_index << "): idx=" << i->if_index
+        //           << " name=" << i->if_name << "\n";
         if (i->if_index == if_index)
         {
             if_name = i->if_name;

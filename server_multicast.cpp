@@ -203,7 +203,9 @@ auto multicast_server(
             );
             // clang-format on
             exit_on_error(err, Component::server, "Could not send hello message");
-            info(Component::server, "Sent " + hello);
+            std::stringstream ss;
+            ss << "Sent " << err << " bytes: " << hello;
+            info(Component::server, ss.str());
             std::this_thread::sleep_for(200ms);
         }
     }
