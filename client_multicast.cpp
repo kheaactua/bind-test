@@ -184,41 +184,34 @@ auto multicast_client(
         std::this_thread::sleep_for(500ms);
     }
 
+    {
+        // Set a timeout?
+        struct timeval tv;
+        tv.tv_sec      = 0;
+        tv.tv_usec     = 0.4e6;
+        auto const err = setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        exit_on_error(err, Component::client, "Cannot set timeout");
+    }
+
     auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
         std::array<char, 1024> buffer = {0};
-        ssize_t n = 0;
-        for (int i = 0; i < 3; i++)
-        {
-            // clang-format off
-            // Getting "Resource temporarily unavailable"
-            n = ::recvfrom(
-                sock_fd,
-                buffer.data(),
-                buffer.size()-1,
-                // MSG_WAITALL,
-                MSG_DONTWAIT,
-                reinterpret_cast<struct sockaddr *>(&mcast_group),
-                &len
-            );
-            // clang-format on
-            auto const errno_b = errno;
-            buffer[static_cast<decltype(buffer)::size_type>(n)] = '\0';
-            if (n < 0)
-            {
-                std::stringstream ss;
-                ss << "recv: error=" << strerror(errno_b);
-                info(Component::client, ss.str());
-                std::this_thread::sleep_for(200ms);
-                continue;
-            }
-            else
-            {
-                break;
-            }
-        }
 
-        if (n>0)
+        // clang-format off
+        // Getting "Resource temporarily unavailable"
+        auto const n = ::recvfrom(
+            sock_fd,
+            buffer.data(),
+            buffer.size()-1,
+            MSG_WAITALL,
+            reinterpret_cast<struct sockaddr *>(&mcast_group),
+            &len
+        );
+        // clang-format on
+        auto const errno_b                                  = errno;
+        buffer[static_cast<decltype(buffer)::size_type>(n)] = '\0';
+
+        if (n > 0)
         {
             std::stringstream ss;
             ss << "Read: " << buffer.data();
@@ -226,7 +219,9 @@ auto multicast_client(
         }
         else
         {
-            exit_on_error(-1, Component::client, "Never received data from server.");
+            std::stringstream ss;
+            ss << "Never received data.  error=" << strerror(errno_b);
+            exit_on_error(n, Component::client, ss.str());
         }
     }
 
