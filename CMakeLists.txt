@@ -3,12 +3,16 @@ project(bind-test)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+set(INTERFACE_IP "10.1.0.100" CACHE STRING "Address of interface to bind to")
+set(INTERFACE_NAME "enx0050b6eb5220" CACHE STRING "Name of interface to bind to")
+set(MULTICAST_ADDR "224.2.127.254" CACHE STRING "Multicast IP to use")
+
 add_executable(bind-test)
 target_sources(bind-test PRIVATE main.cpp)
 target_compile_definitions(bind-test
   PUBLIC
-    -DINTERFACE_IP=192.168.2.53
-    -DMULTICAST_ADDR=224.2.127.254
-    -DINTERFACE_NAME="eno1"
+    -DINTERFACE_IP=${INTERFACE_IP}
+    -DINTERFACE_NAME=${INTERFACE_NAME}
+    -DMULTICAST_ADDR=${MULTICAST_ADDR}
 )
 target_compile_features(bind-test PRIVATE cxx_std_17)

@@ -1,0 +1,61 @@
+{
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build using Ninja generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/default",
+      "cacheVariables": {
+        "MULTICAST_ADDR": {
+          "type": "STRING",
+          "value": "224.2.127.254"
+        }
+      }
+    },
+    {
+      "name": "eno1",
+      "inherits": "default",
+      "displayName": "eno1",
+      "description": "Build for eno1",
+      "cacheVariables": {
+        "INTERFACE_IP": {
+          "type": "STRING",
+          "value": "192.168.2.53"
+        },
+        "INTERFACE_NAME": {
+          "type": "STRING",
+          "value": "eno1"
+        }
+      }
+    },
+    {
+      "name": "qc",
+      "inherits": "default",
+      "displayName": "QC Network",
+      "description": "Build for enx0050b6eb5220",
+      "cacheVariables": {
+        "INTERFACE_IP": {
+          "type": "STRING",
+          "value": "10.1.0.100"
+        },
+        "INTERFACE_NAME": {
+          "type": "STRING",
+          "value": "enx0050b6eb5220"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    }
+  ]
+}
