@@ -17,18 +17,20 @@ cc_defaults {
     cpp_std: "c++17",
 
     header_libs: ["libboost_headers"],
+    shared_libs: ["libboost_system"],
 
     cflags: [
         "-DINTERFACE_IP=\"10.7.0.10\"",
         "-DINTERFACE_NAME=\"oem1\"",
         "-DMULTICAST_ADDR=\"224.2.127.254\"",
+        "-fexceptions",
     ],
     target: {
         vendor: {
             cflags: [
                 "-UINTERFACE_IP",
                 "-UINTERFACE_NAME",
-                "-DMULTICAST_ADDR",
+                "-UMULTICAST_ADDR",
 
                 "-DINTERFACE_IP=\"10.6.0.10\"",
                 "-DINTERFACE_NAME=\"oem2\"",

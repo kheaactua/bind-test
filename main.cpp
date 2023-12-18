@@ -23,6 +23,18 @@
 #error "Please define MULTICAST_ADDR"
 #endif
 
+#ifdef BOOST_NO_EXCEPTIONS
+namespace boost
+{
+
+template<class E> inline void throw_exception(E const & e)
+{
+    std::cout << "Boost exception thrown! " << e;
+}
+
+}
+#endif
+
 
 auto main() -> int
 {
