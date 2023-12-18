@@ -28,10 +28,9 @@ auto multicast_client(
 {
     // http://www.cs.tau.ac.il/~eddiea/samples/Multicast/multicast-listen.c.html
     int sock_fd = 0;
-    struct sockaddr_in mcast_group, client_addr;
+    struct sockaddr_in mcast_group;
 
     std::memset(&mcast_group, 0, sizeof(mcast_group));
-    std::memset(&client_addr, 0, sizeof(client_addr));
 
     {
         sock_fd = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -193,9 +192,9 @@ auto multicast_client(
         exit_on_error(err, Component::client, "Cannot set timeout");
     }
 
-    auto len = static_cast<socklen_t>(sizeof(client_addr));
     {
         std::array<char, 1024> buffer = {0};
+        auto len = static_cast<socklen_t>(buffer.size());
 
         // clang-format off
         // Getting "Resource temporarily unavailable"
