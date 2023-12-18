@@ -107,10 +107,8 @@ auto server(
     // bind socket
     {
         // set up addresses
-        // std::memset(&addr, 0, sizeof(addr));
         serv_addr.sin_family = AF_INET;
-        serv_addr.sin_addr.s_addr = INADDR_ANY;
-        // address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
+        address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
         serv_addr.sin_port = ::htons(port);
 
         std::cout << "[INFO] Binding to " << ::inet_ntoa(serv_addr.sin_addr) << ":"
@@ -190,7 +188,7 @@ auto client(
     }
 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    address2in_addr(if_addr, serv_addr.sin_addr.s_addr);
     serv_addr.sin_port   = htons(port);
 
     {
