@@ -66,16 +66,8 @@ auto set_mc_bound_2(
         // also you can recv any packets from any clients in the multicast group.
         // """
         ip_mreqn req;
-
-        // TODO replace with address2in_addr
-        {
-            auto const a = if_addr.to_v4().to_bytes();
-            std::memcpy(&req.imr_address.s_addr, a.data(), a.size());
-        }
-        {
-            auto const a = mc_addr.to_v4().to_bytes();
-            std::memcpy(&req.imr_multiaddr.s_addr, a.data(), a.size());
-        }
+        address2in_addr(if_addr, req.imr_address.s_addr);
+        address2in_addr(mc_addr, req.imr_multiaddr.s_addr);
         get_ifindex(if_name, &req.imr_ifindex);
 
         // clang-format off
