@@ -20,7 +20,7 @@
 #endif
 
 #ifndef MULTICAST_ADDR
-#define "Please define MULTICAST_ADDR"
+#error "Please define MULTICAST_ADDR"
 #endif
 
 
