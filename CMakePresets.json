@@ -22,6 +22,10 @@
         "CMAKE_INSTALL_MESSAGE": {
           "type": "STRING",
           "value": "LAZY"
+        },
+        "CMAKE_MAKE_PROGRAM": {
+          "type": "STRING",
+          "value": "/home/matt/.conan2/p/ninja6fed3c8400c5b/p/bin/ninja"
         }
       }
     },

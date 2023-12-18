@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 project(bind-test)
 
 set(INTERFACE_IP "10.1.0.100" CACHE STRING "Address of interface to bind to")
-set(INTERFACE_NAME "enx0050b6eb5220" CACHE STRING "Name of interface to bind to")
+set(INTERFACE_NAME "enp0s31f6" CACHE STRING "Name of interface to bind to")
 set(MULTICAST_ADDR "224.2.127.254" CACHE STRING "Multicast IP to use")
 set(PORT "30512" CACHE STRING "Port to send and receive from")
 
